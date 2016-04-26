@@ -177,6 +177,9 @@ def stop(fitness, epoch):
 ########## Define some directory for storing the results
 if not os.path.isdir('./files/%s-%s/' % (scenario_name, weight)):
 	os.makedirs('./files/%s-%s/' % (scenario_name, weight))
+if not os.path.isdir('./images/%s-%s/' % (scenario_name, weight)):
+	os.makedirs('./images/%s-%s/' % (scenario_name, weight))
+
 
 ########## For optimization
 print("Running the optimization in 1D")
