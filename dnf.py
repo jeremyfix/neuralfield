@@ -1,5 +1,6 @@
 import numpy as np
 import tools
+import copy
 
 ''' Script for defining a 1D neural field 
     The equation reads:
@@ -21,8 +22,8 @@ import tools
       * a DOL : w(x) = Ae [1 - |x|/(2 ks si)]^+ - ka Ae [1 - |x| / (2 si)]^+
          4 params : Ae >= 0 ; ks in [0, 1] ; ka in [0, 1] ; si > 0
 
-      * a stepwise : w(x) = Ae 1_(|x| < ks si) - ka Ae 1_(|x| < si) - k ka Ae 1_(|x| >= si)
-         5 params : Ae >= 0 ; ks in [0, 1], ka in [0,1] , k in [0, 1], si > 0
+      * a stepwise : w(x) = Ae 1_(|x| < ks si) - ka Ae 1_(|x| < si)   
+         4 params : Ae >= 0 ; ks in [0, 1], ka in [0,1] , si > 0
 
     The equation is simulated synchronously, with Euler and a time step dt
 '''
@@ -64,15 +65,16 @@ def step(dx, params):
 class DNF:
     
     def __init__(self, size, weights_name, tf):
-        if(not weights_name in ["dog", "doe", "dol", "step"]):
+        if(not weights_name in ["dog", "doe", "dol", "step", "optim_step"]):
             raise '''Unrecognized weight kernel, options are
             - dog : difference of gaussians
             - doe : difference of exponentiels
             - dol : difference of linear functions
             - step : step wise function
+            - optim_step : step wise function with a linear complexity
             '''
         self.weights_name = weights_name
-        self.dict_weights = {'dog' : dog, 'dol': dol, 'doe': doe, 'step': step}
+        self.dict_weights = {'dog' : dog, 'dol': dol, 'doe': doe, 'step': step, 'optim_step': step}
         if(not self.weights_name in self.dict_weights.keys()):
             raise "Unknown weight function '%s'" % self.weights_name
 
@@ -85,11 +87,12 @@ class DNF:
         self.dt_tau = 0
         self.h = 0
         self.w = np.zeros(self.size)
+        self.w_params = None
 
     def __build_weights(self, wparams):
         self.w = np.arange(self.size[0])
         for i in range(self.size[0]):
-            self.w[i] = np.min([self.w[i], self.size[0] - np.fabs(self.w[i])])
+            self.w[i] = np.min([self.w[i], self.size[0] - self.w[i]])
         self.w = self.dict_weights[self.weights_name](self.w, wparams)
 
     def reset(self):
@@ -99,10 +102,38 @@ class DNF:
     def set_params(self, params):
         self.dt_tau = params[0]
         self.h = params[1]
-        self.__build_weights(params[2:])
+        self.w_params = copy.copy(params[2:])
+        if self.weights_name in ["dog", "doe", "dol", "step"]:
+            self.__build_weights(params[2:])
+        else:
+            # If weights_name == 'optim_step', we do not have to build anything
+            pass
+
+    def get_lateral_contributions(self):
+        if self.weights_name in ["dog", "doe", "dol", "step"]:
+            # We use the generic computation with a FFT based convolution
+            return tools.cconv(self.fu, self.w) 
+        elif self.weigts_name == 'optim_step':
+            # Reminder : the Step function is here defined as :
+            #a stepwise : w(x) = Ae 1_(|x| < ke si) - ki Ae 1_(|x| < si)
+            # 1 params : Ae >= 0 ; ke in [0, 1], ki in [0,1] ,  si > 0
+            
+            Ae, ke, ki, si = params
+            se = ke * si
+            Ai = ki * Ae
+
+            lat = np.zeros(self.size)
+            # We need to compute the lateral contribution at the first position 
+            # with N computation            
+            lat[0] = Ae * sum(self.fu[:int(ceil(se))]) - Ai * sum(self.fu[int(ceil(se)):int(ceil(si))])
+
+            # TODO !!!!!!!!!!!!!!!
+            # We can then compute the lateral contributions of the other locations
+            # with a sliding window by just updating the contributions
+            # at the "corners" of the weight function
 
     def step(self, I):
-        self.u = self.u + self.dt_tau * (-self.u + tools.cconv(self.fu, self.w)  + I + self.h)
+        self.u = self.u + self.dt_tau * (-self.u + self.get_lateral_contributions()  + I + self.h)
         self.fu = self.transfer_function(self.u)
 
     def get_output(self):
