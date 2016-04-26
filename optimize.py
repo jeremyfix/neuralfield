@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.animation as animation
 import sys
+import os
 import time
 import libPyPopot
 
@@ -172,6 +173,10 @@ def ubound(index):
 
 def stop(fitness, epoch):
     return (epoch >= pso_max_epoch) #or (fitness <= 1e-4) 
+
+########## Define some directory for storing the results
+if not os.path.isdir('./files/%s-%s/' % (scenario_name, weight)):
+	os.makedirs('./files/%s-%s/' % (scenario_name, weight))
 
 ########## For optimization
 print("Running the optimization in 1D")
