@@ -93,7 +93,7 @@ if(scenario_name == 'selection'):
 
 
         if(filename):
-            plt.savefig(filename)
+            plt.savefig(filename, bbox_inches='tight')
         else:
             plt.show()
         
@@ -139,7 +139,7 @@ else:
 
 
         if(filename):
-            plt.savefig(filename)
+            plt.savefig(filename, bbox_inches='tight')
         else:
             plt.show()
 
@@ -201,7 +201,7 @@ test_params = algo.bestParticle()
 print("Best solution [fitness=%f]: " % evaluate(test_params), test_params)
 
 # Plotting the best
-plot_best(test_params, 'images/%s-%s/%05i.png'%(scenario_name, weight,trial_nb))
+plot_best(test_params, 'images/%s-%s/%05i.pdf'%(scenario_name, weight,trial_nb))
 #plot_best(test_params)
 
 
