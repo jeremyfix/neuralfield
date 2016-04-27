@@ -30,7 +30,7 @@ if(len(sys.argv) != 4):
 
 
 weight = sys.argv[1]
-if(not weight in ['dog', 'doe', 'dol','step']):
+if(not weight in ['dog', 'doe', 'dol','step', 'optim_step']):
     raise "Unrecognized weight function '%s'" % weight
 
 trial_nb = int(sys.argv[2])
