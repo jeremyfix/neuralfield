@@ -64,7 +64,7 @@ def dol(dx, params):
 
 def step(dx, params):
     Ae, ke, ki, si = params
-    return Ae * np.piecewise(dx, [np.fabs(dx) < ke*si], [1]) - ki * Ae * np.piecewise(dx, [np.fabs(dx) < si], [1]) #- k *ki * Ae * np.piecewise(dx, [np.fabs(dx) >= si], [1])
+    return Ae * np.piecewise(dx, [np.fabs(dx) <= ke*si], [1]) - ki * Ae * np.piecewise(dx, [np.fabs(dx) <= si], [1]) #- k *ki * Ae * np.piecewise(dx, [np.fabs(dx) >= si], [1])
 
 class DNF:
     
@@ -108,12 +108,12 @@ class DNF:
         self.h = params[1]
         self.w_params = copy.copy(params[2:])
         if self.weights_name in ["dog", "doe", "dol", "step"]:
-            self.__build_weights(params[2:])
+            self.__build_weights(self.w_params)
         else:
             # If weights_name == 'optim_step', we do not have to build anything
             pass
 
-    @profile
+    #@profile
     def get_lateral_contributions(self):
         if self.weights_name in ["dog", "doe", "dol", "step"]:
             # We use the generic computation with a FFT based convolution
@@ -129,8 +129,9 @@ class DNF:
         return self.fu.copy()
 
 if(__name__ == '__main__'):
-    params = [0.2552566456392502, -0.5031245130938667, 0.14836041727719693, 0.07709071682932468, 0.7505707917741667, 100.0]
+    params = [0.2552566456392502, -0.5031245130938667, 0.14836041727719693, 0.07709071682932468, 0.7505707917741667, 40]
     N = 100
+    np.random.seed(0)
     I = np.random.random((N,))
 
     field = DNF((N,), 'step', heaviside_tf)
@@ -145,9 +146,9 @@ if(__name__ == '__main__'):
         field.step(I)
     output_optim_step = field.get_output()
 
-    #import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
     
-    #f, axarr = plt.subplots(2, sharex=True)
-    #axarr[0].plot(output_step,'b')
-    #axarr[1].plot(output_optim_step,'r')
-    #plt.show()
+    f, axarr = plt.subplots(2, sharex=True)
+    axarr[0].plot(output_step,'b')
+    axarr[1].plot(output_optim_step,'r')
+    plt.show()
