@@ -129,21 +129,28 @@ class DNF:
         return self.fu.copy()
 
 if(__name__ == '__main__'):
+    import time
     params = [0.2552566456392502, -0.5031245130938667, 0.14836041727719693, 0.07709071682932468, 0.7505707917741667, 40]
-    N = 100
+    N = 1000
     np.random.seed(0)
     I = np.random.random((N,))
 
     field = DNF((N,), 'step', heaviside_tf)
     field.set_params(params)
-    for i in range(100):
+    t0 = time.time()
+    for i in range(1000):
         field.step(I)
+    t1 = time.time()
+    print("Time for step : %s s./ step" % ((t1 - t0) / 1000))
     output_step = field.get_output()
 
     field = DNF((N,), 'optim_step', heaviside_tf)
     field.set_params(params)
-    for i in range(100):
+    t0 = time.time()
+    for i in range(1000):
         field.step(I)
+    t1 = time.time()
+    print("Time for optim step : %s s./ step" % ((t1 - t0) / 1000))
     output_optim_step = field.get_output()
 
     import matplotlib.pyplot as plt

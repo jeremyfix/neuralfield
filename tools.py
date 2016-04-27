@@ -73,34 +73,33 @@ def cconv_onestep(fu, A, s):
     width_step = int(np.floor(s))
     lat[0] = np.sum(fu[:(rcorner+1)]) + np.sum(fu[lcorner:])
 
-    for i in xrange(1, N - width_step):
-        rcorner += 1
-        lat[i] = lat[i-1] + fu[rcorner] - fu[lcorner]
-        lcorner += 1
-
-    rcorner = 0
-    lat[N-width_step] = lat[N-width_step-1] + fu[rcorner] - fu[lcorner]
-    lcorner += 1
-
-    for i in xrange(N-width_step+1, N):
-        rcorner += 1
-        lat[i] = lat[i-1] + fu[rcorner] - fu[lcorner]
-        lcorner += 1
- 
-
-    #for i in xrange(1, N):
-    #    # We can then compute the lateral contributions of the other locations
-    #    # with a sliding window by just updating the contributions
-    #    # at the "corners" of the weight function
+    # We can avoid one comparison .... but this is really a tiny gain
+    #for i in xrange(1, N - width_step):
     #    rcorner += 1
-    #    if(rcorner >= N):
-    #        rcorner = 0
-    #    
     #    lat[i] = lat[i-1] + fu[rcorner] - fu[lcorner]
-
     #    lcorner += 1
-    #    if(lcorner >= N):
-    #        lcorner = 0
+
+    #rcorner = 0
+    #lat[N-width_step] = lat[N-width_step-1] + fu[rcorner] - fu[lcorner]
+    #lcorner += 1
+
+    #for i in xrange(N-width_step+1, N):
+    #    rcorner += 1
+    #    lat[i] = lat[i-1] + fu[rcorner] - fu[lcorner]
+    #    lcorner += 1
+ 
+    # The code below is more compact than the above but has an additional comparison
+    for i in xrange(1, N):
+        # We can then compute the lateral contributions of the other locations
+        # with a sliding window by just updating the contributions
+        # at the "corners" of the weight function
+        rcorner += 1
+        if(rcorner >= N):
+            rcorner = 0
+        
+        lat[i] = lat[i-1] + fu[rcorner] - fu[lcorner]
+
+        lcorner += 1
         
     return A*lat
 
