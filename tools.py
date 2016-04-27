@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from __future__ import unicode_literals
 from __future__ import print_function
 from __future__ import division
@@ -51,6 +53,8 @@ def cconv_onestep(fu, A, s):
     # Mind that we use a toric topology, so that for the first unit 
     # the leftmost corner is actually on the right because of the wrap around
 
+    # TODO : is it equivalent to using summed area table (image intégrale) ?
+
     # we must handle the specific cases where the excitatory or inhibitory
     # radii cover the whole field
     
@@ -61,24 +65,42 @@ def cconv_onestep(fu, A, s):
     if(int(s) == 0):
         return A * fu
 
-    lcorner = int(np.ceil(N-s))
+    # We define the corners, i.e. the extreme positions for which the step
+    # has value A and then drops to 0
+    # We use negative indexing of python to avoid one comparison in the loop below
+    lcorner = int(np.ceil(-s))
     rcorner = int(np.floor(s))
-    #lat_current = sum(itertools.islice(fu, 0, corners[1]+1)) + sum(itertools.islice(fu,corners[0],None))
-    lat[0] = np.sum(fu[:rcorner+1]) + np.sum(fu[lcorner:])
+    width_step = int(np.floor(s))
+    lat[0] = np.sum(fu[:(rcorner+1)]) + np.sum(fu[lcorner:])
 
-    for i in xrange(1, N):
-        # We can then compute the lateral contributions of the other locations
-        # with a sliding window by just updating the contributions
-        # at the "corners" of the weight function
+    for i in xrange(1, N - width_step):
         rcorner += 1
-        if(rcorner >= N):
-            rcorner = 0
-        
         lat[i] = lat[i-1] + fu[rcorner] - fu[lcorner]
-
         lcorner += 1
-        if(lcorner >= N):
-            lcorner = 0
+
+    rcorner = 0
+    lat[N-width_step] = lat[N-width_step-1] + fu[rcorner] - fu[lcorner]
+    lcorner += 1
+
+    for i in xrange(N-width_step+1, N):
+        rcorner += 1
+        lat[i] = lat[i-1] + fu[rcorner] - fu[lcorner]
+        lcorner += 1
+ 
+
+    #for i in xrange(1, N):
+    #    # We can then compute the lateral contributions of the other locations
+    #    # with a sliding window by just updating the contributions
+    #    # at the "corners" of the weight function
+    #    rcorner += 1
+    #    if(rcorner >= N):
+    #        rcorner = 0
+    #    
+    #    lat[i] = lat[i-1] + fu[rcorner] - fu[lcorner]
+
+    #    lcorner += 1
+    #    if(lcorner >= N):
+    #        lcorner = 0
         
     return A*lat
 
