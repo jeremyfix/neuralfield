@@ -1,6 +1,8 @@
 import numpy as np
 import tools
 import copy
+import itertools
+
 
 ''' Script for defining a 1D neural field 
     The equation reads:
@@ -26,6 +28,8 @@ import copy
          4 params : Ae >= 0 ; ks in [0, 1], ka in [0,1] , si > 0
 
     The equation is simulated synchronously, with Euler and a time step dt
+
+    The neuralfield has a toric topology
 '''
 
 def heaviside_tf(x):
@@ -113,24 +117,80 @@ class DNF:
         if self.weights_name in ["dog", "doe", "dol", "step"]:
             # We use the generic computation with a FFT based convolution
             return tools.cconv(self.fu, self.w) 
-        elif self.weigts_name == 'optim_step':
-            # Reminder : the Step function is here defined as :
-            #a stepwise : w(x) = Ae 1_(|x| < ke si) - ki Ae 1_(|x| < si)
-            # 1 params : Ae >= 0 ; ke in [0, 1], ki in [0,1] ,  si > 0
-            
-            Ae, ke, ki, si = params
-            se = ke * si
-            Ai = ki * Ae
+        elif self.weights_name == 'optim_step':
+            return self.lateral_optim_step()
 
-            lat = np.zeros(self.size)
-            # We need to compute the lateral contribution at the first position 
-            # with N computation            
-            lat[0] = Ae * sum(self.fu[:int(ceil(se))]) - Ai * sum(self.fu[int(ceil(se)):int(ceil(si))])
+    def lateral_optim_step(self):
+        # Reminder : the Step function is here defined as :
+        #a stepwise : w(x) = Ae 1_(|x| < ke si) - ki Ae 1_(|x| < si)
+        # 1 params : Ae >= 0 ; ke in [0, 1], ki in [0,1] ,  si > 0
+        
+        Ae, ke, ki, si = self.w_params
+        se = ke * si
+        Ai = ki * Ae
 
-            # TODO !!!!!!!!!!!!!!!
+        lat = np.zeros(self.size)
+        # We need to compute the lateral contribution at the first position 
+        # with an order of N sums and 2 products            
+        N = self.size[0]
+        # We identify the corner points of the steps
+        # which are the ones for which the lateral contribution will change as we move  
+        # along a sliding window
+        #          -------
+        #          |     |
+        # ---------=     =---------
+        # On the above step function, the corner points are denoted by "="
+        # In corners[0] is the leftmost, corners[1] is the rightmost
+        # Mind that we use a toric topology, so that for the first unit 
+        # the leftmost corner is actually on the right because of the wrap around
+
+        # we must handle the specific cases where the excitatory or inhibitory
+        # radii cover the whole field
+        
+        all_excitatories = se >= N-1
+        if not all_excitatories:
+            corners_exc = [int(np.ceil(N-se)), int(np.floor(se))]
+            lat_e = Ae * (sum(itertools.islice(self.fu, 0, corners_exc[1]+1)) + sum(itertools.islice(self.fu,corners_exc[0],None)))
+        else:
+            lat_e = Ae * sum(self.fu)
+
+        all_inhibitories = si >= N-1
+        if not all_inhibitories:
+            corners_inh = [int(np.ceil(N-si)), int(np.floor(si))]
+            lat_i = Ai * (sum(itertools.islice(self.fu,0, corners_inh[1]+1)) + sum(itertools.islice(self.fu,corners_inh[0], None)))
+        else:
+            lat_i = Ai * sum(self.fu)
+
+        lat[0] = lat_e - lat_i
+
+        for i in xrange(1, N):
             # We can then compute the lateral contributions of the other locations
             # with a sliding window by just updating the contributions
             # at the "corners" of the weight function
+            if not all_excitatories:
+                lat_e -= Ae * self.fu[corners_exc[0]]
+                corners_exc[0] += 1
+                if(corners_exc[0] >= N):
+                    corners_exc[0] = 0
+            
+                corners_exc[1] += 1
+                if(corners_exc[1] >= N):
+                    corners_exc[1] = 0
+                lat_e += Ae * self.fu[corners_exc[1]]
+
+            if not all_inhibitories:
+                lat_i -= Ai * self.fu[corners_inh[0]]
+                corners_inh[0] += 1
+                if(corners_inh[0] >= N):
+                    corners_inh[0] = 0
+            
+                corners_inh[1] += 1
+                if(corners_inh[1] >= N):
+                    corners_inh[1] = 0
+                lat_i += Ai * self.fu[corners_inh[1]]
+
+            lat[i] = lat_e - lat_i
+        return lat
 
     def step(self, I):
         self.u = self.u + self.dt_tau * (-self.u + self.get_lateral_contributions()  + I + self.h)
@@ -140,4 +200,25 @@ class DNF:
         return self.fu.copy()
 
 if(__name__ == '__main__'):
-    print("Testing")
+    params = [0.2552566456392502, -0.5031245130938667, 0.14836041727719693, 0.07709071682932468, 0.7505707917741667, 100.0]
+    N = 100
+    I = np.random.random((N,))
+
+    field = DNF((N,), 'step', heaviside_tf)
+    field.set_params(params)
+    for i in range(100):
+        field.step(I)
+    output_step = field.get_output()
+
+    field = DNF((N,), 'optim_step', heaviside_tf)
+    field.set_params(params)
+    for i in range(100):
+        field.step(I)
+    output_optim_step = field.get_output()
+
+    import matplotlib.pyplot as plt
+    
+    f, axarr = plt.subplots(2, sharex=True)
+    axarr[0].plot(output_step,'b')
+    axarr[1].plot(output_optim_step,'r')
+    plt.show()
