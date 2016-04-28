@@ -1,5 +1,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
+#include <cmath>
+#include <iostream>
 
 // Written following the tutorial : http://dan.iel.fm/posts/python-c-extensions/
 
@@ -11,7 +13,53 @@ PyDoc_STRVAR(ctools__doc__,
 PyDoc_STRVAR(cconv_onestep_utilitary__doc__,
         "Utilitary function to compute the convolution with a step kernel");
 void cconv_onestep_utilitary(double* fu, unsigned int N, const double& A, const double& s, double* res) {
-   
+
+    unsigned int lcorner = ceil(N - s);
+    unsigned int rcorner = floor(s);
+    unsigned int width_step = floor(s);
+
+    // Computes the contribution for the first position
+    //
+    // res[0] = np.sum(fu[:rcorner+1]) + np.sum(fu[lcorner:])
+    double* resptr = res;
+    double* fuptr = fu;
+    *resptr = 0;
+    for(unsigned int i = 0; i < rcorner+1 ; ++i, ++fuptr)
+        (*resptr) += *fuptr;
+
+    fuptr = fu + lcorner;
+    for(unsigned int i = 0; i < width_step; ++i, ++fuptr)
+        (*resptr) += *fuptr;
+
+    double* furight = fu + rcorner;
+    double* fuleft = fu + lcorner;
+    double* prev_resptr = res;
+    resptr = res+1;
+    for(unsigned int i = 1 ; i < N; ++i, ++resptr, ++prev_resptr) {
+        // We can then compute the lateral contributions of the other locations
+        // with a sliding window by just updating the contributions
+        // at the "corners" of the weight function
+        ++rcorner;
+        ++furight;
+        if(rcorner >= N) {
+            rcorner = 0;
+            furight = fu;
+        }
+
+        (*resptr) = (*prev_resptr) + (*furight) - (*fuleft);
+        
+        ++lcorner;
+        ++fuleft;
+        if(lcorner >= N) {
+            lcorner = 0;
+            fuleft = fu;
+        }
+    }
+
+    // res = A * res;
+    resptr = res;
+    for(unsigned int i = 0 ; i < N; ++i, ++resptr)
+        (*resptr) *= A;
 }
 
 // The wrapper to the C function

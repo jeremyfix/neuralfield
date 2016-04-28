@@ -9,7 +9,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 import itertools
-#import ctools
+import ctools
 
 
 def cconv(a, b):
@@ -84,20 +84,22 @@ def cconv_onestep(fu, A, s):
     # has value A and then drops to 0
     # We use negative indexing of python to avoid one comparison in the loop below
 
+    # In python :
+    #lcorner = int(np.ceil(-s))
+    #rcorner = int(np.floor(s))
+    #width_step = int(np.floor(s))
+    #lat = np.roll(fu, -width_step) - np.roll(fu, width_step+1)
+    #lat[0] = fu[:(rcorner+1)].sum() + fu[lcorner:].sum()
+    #pyres = A*lat.cumsum()
 
-    lcorner = int(np.ceil(-s))
-    rcorner = int(np.floor(s))
-    width_step = int(np.floor(s))
+    # With the C extension
+    lat = np.zeros((N,))
+    ctools.cconv_onestep_utilitary(fu,A, s, lat)
 
-    lat = np.roll(fu, -width_step) - np.roll(fu, width_step+1)
-    lat[0] = fu[:(rcorner+1)].sum() + fu[lcorner:].sum()
-    return A*lat.cumsum()
-    #lat = np.zeros((N,))
-    #ctools.cconv_onestep_utilitary(fu,A, s, lat)
-    #return lat
+    return lat
 
 
-    # The code below is much much less efficient !
+    # The python code below is much much less efficient !
     #
     #for i in xrange(1, N):
     #    # We can then compute the lateral contributions of the other locations
@@ -111,7 +113,7 @@ def cconv_onestep(fu, A, s):
 
     #    lcorner += 1
         
-    return A*lat
+    #return A*lat
 
 
 
