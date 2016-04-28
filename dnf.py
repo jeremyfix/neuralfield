@@ -98,6 +98,7 @@ class DNF:
         for i in range(self.size[0]):
             self.w[i] = np.min([self.w[i], self.size[0] - self.w[i]])
         self.w = self.dict_weights[self.weights_name](self.w, wparams)
+        self.fftw = np.fft.fft(self.w)
 
     def reset(self):
         self.u = np.zeros(self.size)
@@ -117,7 +118,7 @@ class DNF:
     def get_lateral_contributions(self):
         if self.weights_name in ["dog", "doe", "dol", "step"]:
             # We use the generic computation with a FFT based convolution
-            return tools.cconv(self.fu, self.w) 
+            return tools.cconv_with_fftkernel(self.fu, self.fftw) 
         elif self.weights_name == 'optim_step':
             return tools.cconv_step(self.fu, self.w_params)
 
@@ -131,14 +132,14 @@ class DNF:
 if(__name__ == '__main__'):
     import time
     params = [0.2552566456392502, -0.5031245130938667, 0.14836041727719693, 0.07709071682932468, 0.7505707917741667, 40]
-    N = 1000
-    np.random.seed(0)
+    N = 100
+    #np.random.seed(0)
     I = np.random.random((N,))
 
     field = DNF((N,), 'step', heaviside_tf)
     field.set_params(params)
     t0 = time.time()
-    for i in range(1000):
+    for i in range(100):
         field.step(I)
     t1 = time.time()
     print("Time for step : %s s./ step" % ((t1 - t0) / 1000))
@@ -147,7 +148,7 @@ if(__name__ == '__main__'):
     field = DNF((N,), 'optim_step', heaviside_tf)
     field.set_params(params)
     t0 = time.time()
-    for i in range(1000):
+    for i in range(100):
         field.step(I)
     t1 = time.time()
     print("Time for optim step : %s s./ step" % ((t1 - t0) / 1000))
