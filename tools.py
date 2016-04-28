@@ -16,11 +16,24 @@ def cconv(a, b):
     '''
     return np.fft.ifft(np.fft.fft(a) * np.fft.fft(b)).real
 
+def cconv_with_fftkernel(a, fftkernel):
+    '''
+    Computes the circular convolution of the (real-valued) vectors a and b.
+    '''
+    return np.fft.ifft(np.fft.fft(a) * fftkernel).real
+
 def cconv2(a, b):
     '''
     Computes the circular convolution of the (real-valued) matrices a and b.
     '''
     return np.fft.ifft2(np.fft.fft2(a) * np.fft.fft2(b)).real
+
+def cconv2_with_fftkernel(a, fftkernel):
+    '''
+    Computes the circular convolution of the (real-valued) matrices a and b.
+    '''
+    return np.fft.ifft2(np.fft.fft2(a) * fftkernel).real
+
 
 #@profile
 def cconv_step(fu, w_params):
