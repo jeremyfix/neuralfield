@@ -39,7 +39,6 @@ def cconv_step(fu, w_params):
 def cconv_onestep(fu, A, s):
     N = fu.shape[0]
 
-    lat = np.zeros((N,))
     # We need to compute the lateral contribution at the first position 
     # with an order of N sums and 2 products            
     # We identify the corner points of the steps
@@ -60,6 +59,7 @@ def cconv_onestep(fu, A, s):
     
     all_involved = (s >= (N/2.))
     if(all_involved):
+        lat = np.zeros((N,))
         lat[:] = A * sum(fu)
         return lat
     if(int(s) == 0):
@@ -68,118 +68,31 @@ def cconv_onestep(fu, A, s):
     # We define the corners, i.e. the extreme positions for which the step
     # has value A and then drops to 0
     # We use negative indexing of python to avoid one comparison in the loop below
+
+
     lcorner = int(np.ceil(-s))
     rcorner = int(np.floor(s))
     width_step = int(np.floor(s))
-    lat[0] = np.sum(fu[:(rcorner+1)]) + np.sum(fu[lcorner:])
 
-    # We can avoid one comparison .... but this is really a tiny gain
-    #for i in xrange(1, N - width_step):
+    lat = np.roll(fu, -width_step) - np.roll(fu, width_step+1)
+    lat[0] = fu[:(rcorner+1)].sum() + fu[lcorner:].sum()
+    return A*lat.cumsum()
+
+    # The code below is much much less efficient !
+    #
+    #for i in xrange(1, N):
+    #    # We can then compute the lateral contributions of the other locations
+    #    # with a sliding window by just updating the contributions
+    #    # at the "corners" of the weight function
     #    rcorner += 1
+    #    if(rcorner >= N):
+    #        rcorner = 0
+    #    
     #    lat[i] = lat[i-1] + fu[rcorner] - fu[lcorner]
+
     #    lcorner += 1
-
-    #rcorner = 0
-    #lat[N-width_step] = lat[N-width_step-1] + fu[rcorner] - fu[lcorner]
-    #lcorner += 1
-
-    #for i in xrange(N-width_step+1, N):
-    #    rcorner += 1
-    #    lat[i] = lat[i-1] + fu[rcorner] - fu[lcorner]
-    #    lcorner += 1
- 
-    # The code below is more compact than the above but has an additional comparison
-    for i in xrange(1, N):
-        # We can then compute the lateral contributions of the other locations
-        # with a sliding window by just updating the contributions
-        # at the "corners" of the weight function
-        rcorner += 1
-        if(rcorner >= N):
-            rcorner = 0
-        
-        lat[i] = lat[i-1] + fu[rcorner] - fu[lcorner]
-
-        lcorner += 1
         
     return A*lat
-
-
-
-
-def cconv_step_optim(fu, w_params):
-    # Reminder : the Step function is here defined as :
-    #a stepwise : w(x) = Ae 1_(|x| < ke si) - ki Ae 1_(|x| < si)
-    # 1 params : Ae >= 0 ; ke in [0, 1], ki in [0,1] ,  si > 0
-    
-    Ae, ke, ki, si = w_params
-    se = ke * si
-    Ai = ki * Ae
-
-    N = fu.shape[0]
-
-    lat = np.zeros((N,))
-    # We need to compute the lateral contribution at the first position 
-    # with an order of N sums and 2 products            
-    # We identify the corner points of the steps
-    # which are the ones for which the lateral contribution will change as we move  
-    # along a sliding window
-    #          -------
-    #          |     |
-    # ---------=     =---------
-    # On the above step function, the corner points are denoted by "="
-    # In corners[0] is the leftmost, corners[1] is the rightmost
-    # Mind that we use a toric topology, so that for the first unit 
-    # the leftmost corner is actually on the right because of the wrap around
-
-    # we must handle the specific cases where the excitatory or inhibitory
-    # radii cover the whole field
-    
-    all_excitatories = se >= N-1
-    if not all_excitatories:
-        corners_exc = [int(np.ceil(N-se)), int(np.floor(se))]
-        lat_e = Ae * (sum(itertools.islice(fu, 0, corners_exc[1]+1)) + sum(itertools.islice(fu,corners_exc[0],None)))
-    else:
-        lat_e = Ae * sum(fu)
-
-    all_inhibitories = si >= N-1
-    if not all_inhibitories:
-        corners_inh = [int(np.ceil(N-si)), int(np.floor(si))]
-        lat_i = Ai * (sum(itertools.islice(fu,0, corners_inh[1]+1)) + sum(itertools.islice(fu,corners_inh[0], None)))
-    else:
-        lat_i = Ai * sum(fu)
-
-    lat[0] = lat_e - lat_i
-
-    for i in xrange(1, N):
-        # We can then compute the lateral contributions of the other locations
-        # with a sliding window by just updating the contributions
-        # at the "corners" of the weight function
-        if not all_excitatories:
-            deltae = -fu[corners_exc[0]]
-            corners_exc[0] += 1
-            if(corners_exc[0] >= N):
-                corners_exc[0] = 0
-        
-            corners_exc[1] += 1
-            if(corners_exc[1] >= N):
-                corners_exc[1] = 0
-            deltae += fu[corners_exc[1]]
-            lat_e += Ae * deltae
-
-        if not all_inhibitories:
-            deltai = -fu[corners_inh[0]]
-            corners_inh[0] += 1
-            if(corners_inh[0] >= N):
-                corners_inh[0] = 0
-        
-            corners_inh[1] += 1
-            if(corners_inh[1] >= N):
-                corners_inh[1] = 0
-            deltai +=fu[corners_inh[1]]
-            lat_i += Ai * deltai
-
-        lat[i] = lat_e - lat_i
-    return lat
 
 
 
