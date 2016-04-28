@@ -9,6 +9,8 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 import itertools
+#import ctools
+
 
 def cconv(a, b):
     '''
@@ -90,6 +92,10 @@ def cconv_onestep(fu, A, s):
     lat = np.roll(fu, -width_step) - np.roll(fu, width_step+1)
     lat[0] = fu[:(rcorner+1)].sum() + fu[lcorner:].sum()
     return A*lat.cumsum()
+    #lat = np.zeros((N,))
+    #ctools.cconv_onestep_utilitary(fu,A, s, lat)
+    #return lat
+
 
     # The code below is much much less efficient !
     #
