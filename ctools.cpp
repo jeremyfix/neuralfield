@@ -25,42 +25,36 @@ void cconv_onestep_utilitary(double* fu, unsigned int N, const double& A, const 
     double* fuptr = fu;
     double* fuptr_end = fu + rcorner + 1;
     *resptr = 0;
-    //for(unsigned int i = 0; i < rcorner+1 ; ++i, ++fuptr)
-    //    (*resptr) += *fuptr;
     while(fuptr != fuptr_end)
         *resptr += *(fuptr++);
 
     fuptr = fu + lcorner;
     fuptr_end = fuptr + width_step;
-    //for(unsigned int i = 0; i < width_step; ++i, ++fuptr)
-    //    (*resptr) += *fuptr;
     while(fuptr != fuptr_end)
         *resptr += *(fuptr++);
- 
-    double* furight = fu + rcorner;
-    double* fuleft = fu + lcorner;
-    double* prev_resptr = res;
-    resptr = res+1;
-    for(unsigned int i = 1 ; i < N; ++i, ++resptr, ++prev_resptr) {
-        // We can then compute the lateral contributions of the other locations
-        // with a sliding window by just updating the contributions
-        // at the "corners" of the weight function
-        ++rcorner;
-        ++furight;
-        if(rcorner >= N) {
-            rcorner = 0;
-            furight = fu;
-        }
 
-        (*resptr) = (*prev_resptr) + (*furight) - (*fuleft);
-        
-        ++lcorner;
-        ++fuleft;
-        if(lcorner >= N) {
-            lcorner = 0;
-            fuleft = fu;
-        }
-    }
+    double * furight = fu + rcorner;
+    double * fuleft = fu + lcorner;
+    double * fuend = fu + N;
+    double * fu_prevend = fu + N - 1;
+    double * resend = res + N;
+    double * prev_resptr = res;
+    resptr = res+1;
+
+    // We iterate until lcorner reaches N (because of the wrap around)
+    while(fuleft != fuend) 
+        *(resptr++) = *(prev_resptr++) + *(++furight) - *(fuleft++);
+    
+    fuleft = fu;
+    // We iterate until rcorner reaches N 
+    while(furight != fu_prevend)
+        *(resptr++) = *(prev_resptr++) + *(++furight) - *(fuleft++);
+
+    furight = fu;
+    *(resptr++) = *(prev_resptr++) + *(furight) - *(fuleft++);
+    // We iterate for the last positions
+    while(resptr != resend)
+        *(resptr++) = *(prev_resptr++) + *(++furight) - *(fuleft++);
 
     // res = A * res;
     resptr = res;
