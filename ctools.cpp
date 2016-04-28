@@ -23,14 +23,20 @@ void cconv_onestep_utilitary(double* fu, unsigned int N, const double& A, const 
     // res[0] = np.sum(fu[:rcorner+1]) + np.sum(fu[lcorner:])
     double* resptr = res;
     double* fuptr = fu;
+    double* fuptr_end = fu + rcorner + 1;
     *resptr = 0;
-    for(unsigned int i = 0; i < rcorner+1 ; ++i, ++fuptr)
-        (*resptr) += *fuptr;
+    //for(unsigned int i = 0; i < rcorner+1 ; ++i, ++fuptr)
+    //    (*resptr) += *fuptr;
+    while(fuptr != fuptr_end)
+        *resptr += *(fuptr++);
 
     fuptr = fu + lcorner;
-    for(unsigned int i = 0; i < width_step; ++i, ++fuptr)
-        (*resptr) += *fuptr;
-
+    fuptr_end = fuptr + width_step;
+    //for(unsigned int i = 0; i < width_step; ++i, ++fuptr)
+    //    (*resptr) += *fuptr;
+    while(fuptr != fuptr_end)
+        *resptr += *(fuptr++);
+ 
     double* furight = fu + rcorner;
     double* fuleft = fu + lcorner;
     double* prev_resptr = res;
