@@ -31,13 +31,14 @@ class CompetitionScenario:
     x_weaks = []
     x_strong = 0
     amplitudes = []
-    sigma = 4.0
+    #sigma = 4.0
     sigmat = 5.0
     Tmax = 40
 
     @classmethod
     def def_scenario(cls, A, s):
         cls.size = s
+        cls.sigma = cls.size[0]/25.
         cls.width = cls.size[0]
         cls.x_weaks = [cls.width/10.0, 5.0 * cls.width/10.0, 7.0 * cls.width/10.0, 9.0 * cls.width/10.0]
         cls.x_strong = 3.0 * cls.width/10.0
