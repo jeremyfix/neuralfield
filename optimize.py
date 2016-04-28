@@ -24,7 +24,7 @@ import tools
 
 if(len(sys.argv) != 4):
     print("Usage %s weight trial_nb scenario" % sys.argv[0])
-    print("weight in [dog, doe, dol, step]")
+    print("weight in [dog, doe, dol, step, optim_step]")
     print("scenario in [selection, wm]")
     sys.exit(-1)
 
