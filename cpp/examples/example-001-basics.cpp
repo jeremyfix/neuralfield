@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 
 	// Let us now play a little bit with the network
 	// By first feeding an input	
-	input.fill(2.0);
+	input->fill(2.0);
 
 	// We need a parameter vector. We can request a correctly size vector
 	//auto parameters = {1.0, ....}

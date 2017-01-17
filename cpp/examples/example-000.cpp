@@ -18,8 +18,19 @@ int main(int argc, char* argv[]) {
 	neuralfield::values_type activities;
 
 	auto input = neuralfield::layer::input<Input>(N, fillInput);
-	input.fill(N/2);
+	input->fill(N/2);
+	std::cout << "Input : " << *input << std::endl;
 
+	auto g1 = neuralfield::function::gaussian_link1D();
+	g1.connect(input);
+
+	g1.update();
+	
+
+	auto g2 = neuralfield::function::gaussian_link1D(1.0, 3., 0.9, 10.);
+	g2.connect(input);
+	
+	/*
 	auto g = neuralfield::layer::gaussian_link1D();
 	auto output = neuralfield::layer::values(N);
 	
@@ -27,6 +38,7 @@ int main(int argc, char* argv[]) {
 	g.set_parameters({1.0, 5.0});
 	g.connect(input);
 	g.evaluate(output);
-	std::cout << "Input : " << input << std::endl;
+	
 	std::cout << "Output: " << output << std::endl;
+	*/
 }
