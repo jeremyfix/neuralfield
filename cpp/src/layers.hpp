@@ -34,15 +34,29 @@
 #include <initializer_list>
 #include <memory>
 #include <algorithm>
+#include <stdexcept>
 
 namespace neuralfield {
 
   namespace layer {   
 
     class Layer {
+    protected:
+      parameters_type _parameters;
     public:
-      virtual void fill_output(values_type& ovalues) = 0;
+      Layer(typename parameters_type::size_type number_of_parameters): _parameters(number_of_parameters){
+      }
+
+      virtual void propagate_values() = 0;
+      virtual void update() = 0;
+      virtual void fill_values(values_type& ovalues) = 0;
+      
+      void set_parameters(std::initializer_list<double> params) {
+	assert(params.size() == _parameters.size());
+	std::copy(params.begin(), params.end(), _parameters.begin());
+      }
     };
+
     
     class ValuesLayer;
     std::ostream& operator<< (std::ostream& os, const ValuesLayer& l);
@@ -51,75 +65,84 @@ namespace neuralfield {
      * @brief A layer hosting some values.
      * A layer hosting some values. It provides the basis from which the InputLayer inherits
      */
-    class ValuesLayer1D : public Layer {
+    class ValuesLayer : public Layer {
 
     protected:
-      values_type _values;
+      std::shared_ptr<values_type> _values;
 
     public:
-      ValuesLayer1D() = delete;
-      ValuesLayer1D(typename values_type::size_type size): _values(size) {}
-      ValuesLayer1D(const ValuesLayer1D&) = default;
+      ValuesLayer() = delete;
+      ValuesLayer(typename parameters_type::size_type number_of_parameters,
+		  typename values_type::size_type size):
+	Layer(number_of_parameters),
+	_values(std::make_shared<values_type>(size))
+      {
+	std::fill(_values->begin(), _values->end(), 0.0);
+      }
+      
+      ValuesLayer(const ValuesLayer&) = default;
 
-      ValuesLayer1D& operator=(const ValuesLayer1D& other) = default;
-      friend std::ostream& operator<< (std::ostream& os, const ValuesLayer1D& l);
+      ValuesLayer& operator=(const ValuesLayer& other) = default;
+      friend std::ostream& operator<< (std::ostream& os, const ValuesLayer& l);
+
+      values_type& values() {
+	return *_values;
+      }
+      
       values_iterator begin() {
-	return _values.begin();
+	return _values->begin();
       }
       values_iterator end() {
-	return _values.end();
+	return _values->end();
       }
       double operator()(values_type::size_type index) const{
-	return _values[index];
+	return (*_values)[index];
       }
 
-      void fill_output(values_type& ovalues) override {
-	assert(ovalues.size() == _values.size);
-	std::copy(_values.begin(), _values.end(), ovalues.begin());
+      void fill_values(values_type& ovalues) override {
+	assert(ovalues.size() == _values->size());
+	std::copy(_values->begin(), _values->end(), ovalues.begin());
       }
 
     };
 
-    std::ostream& operator<<(std::ostream& os, const ValuesLayer1D& l) {
-      for(auto& v: l._values)
+    std::ostream& operator<<(std::ostream& os, const ValuesLayer& l) {
+      for(auto& v: *(l._values))
 	os << v << " ";
       return os;
     }
 
-    ValuesLayer1D values(typename values_type::size_type size) {
-      return ValuesLayer1D(size);
-    }
+    
 
+    class FunctionLayer: public ValuesLayer {
+    protected:
+      std::shared_ptr<ValuesLayer> _prev;
+      
+    public:
+      FunctionLayer(typename parameters_type::size_type number_of_parameters,
+		    typename values_type::size_type size):
+	ValuesLayer(number_of_parameters, size),  _prev(nullptr) {}
+     
+      void connect(std::shared_ptr<ValuesLayer> prev) {
+	_prev = prev;
+      }
 
+    };
+    
 
 
 
 
     
-    class ParametricLayer: public Layer {
-    protected:
-      parameters_type _parameters;
-    public:
-      ParametricLayer() = delete;
-      ParametricLayer(typename parameters_type::size_type size): _parameters(size) {}
-      ParametricLayer(const ParametricLayer&) = default;
-      ParametricLayer& operator=(const ParametricLayer& other) = default;
-      void set_parameters(std::initializer_list<double> params) {
-	assert(params.size() == _parameters.size());
-	std::copy(params.begin(), params.end(), _parameters.begin());
-      }
-
-    };
-
-
-
     /*! \class InputLayer
-     * @brief An input layer hosts some values and can be fed with some INPUT data with a user provided function
+     * @brief An input layer hosts some values and can be fed with some INPUT data with a user provided function. It does not have any parameters
      * \tparam INPUT The type of the input feeding the layer
      * \sa example-001-basics.cpp
      */
-    template<typename INPUT, typename BASE>
-    class InputLayer: public BASE {
+    template<typename INPUT>
+    class InputLayer: public ValuesLayer {
+    protected:
+      
     public:
       using input_type = INPUT;
 
@@ -128,87 +151,171 @@ namespace neuralfield {
 
       fill_input_type _fill_input; //!< A function for feeding a values_type from an INPUT
 
-      InputLayer(typename values_type::size_type size, fill_input_type fill_input) : BASE(size),
-										     _fill_input(fill_input) {}
+      InputLayer(typename parameters_type::size_type number_of_parameters,
+		 typename values_type::size_type size,
+		 fill_input_type fill_input) : ValuesLayer(number_of_parameters, size),
+					       _fill_input(fill_input) {}
 
 
+      void propagate_values(void) override {
+      }
+      
+      void update(void) override {
+      }
+      
       void fill(const input_type& input) {
-	_fill_input(this->_values.begin(), this->_values.end(), input);
+	_fill_input(this->_values->begin(), this->_values->end(), input);
       }
     };
 
 
     template<typename INPUT>
-    std::shared_ptr<InputLayer<INPUT, ValuesLayer1D> > input(values_type::size_type size, typename InputLayer<INPUT, ValuesLayer1D>::fill_input_type fill_input) {
-      return std::make_shared<InputLayer<INPUT, ValuesLayer1D> >(InputLayer<INPUT, ValuesLayer1D>(size, fill_input));
+    std::shared_ptr<InputLayer<INPUT> > input(values_type::size_type size, typename InputLayer<INPUT>::fill_input_type fill_input) {
+      return std::make_shared<InputLayer<INPUT> >(InputLayer<INPUT>(0, size, fill_input));
     }
 
 
-    /*
-      template<typename INPUT>
-      InputLayer<INPUT> input(values_type::size_type width, values_type::size_type height, typename InputLayer<INPUT>::fill_input_type fill_input) {
-      return InputLayer<INPUT>(size, fill_input);
-      }
-    */
+    class BufferedLayer : public ValuesLayer {
 
-    /*! \class LinkType
-     * @brief a type allowing to specialize the linklayers in order to optimally
-     * computes its contribution.
-     */
-    /*
-      enum class LinkType: int {
-      naive,
-      step,
-      fft
-      } LinkType;
-    */
-    /*! \class LinkLayer
-     * @brief A link layer allows to connect ValuesLayer together
-     * @Todo: do we need to host the result of the contribution ???? 
-     */
-    class FunctionLayer: public ParametricLayer {
     protected:
-      std::shared_ptr<Layer> _prev;
-
+      std::shared_ptr<neuralfield::layer::ValuesLayer> _prev;
+      std::shared_ptr<neuralfield::values_type> _buffer;
     public:
-      FunctionLayer(parameters_type::size_type number_of_parameters): ParametricLayer(number_of_parameters), _prev(nullptr) {}
+      BufferedLayer(typename parameters_type::size_type number_of_parameters,
+		    typename values_type::size_type size):
+	ValuesLayer(number_of_parameters, size), _prev(nullptr), _buffer(std::make_shared<values_type>(size)) {
+	std::fill(_buffer->begin(), _buffer->end(), 0.0);
+      }
 
-      //! A link layer must receive inputs from a ValueLayer
-      void connect(std::shared_ptr<Layer> prev ) {
+      void connect(std::shared_ptr<ValuesLayer> prev) {
 	_prev = prev;
-      }	
-
+      }
       
-      void fill_output(neuralfield::values_type& ovalues) override {
+      void propagate_values(void) override {
+      }
+
+      void swap(void) {
+	std::swap(_buffer, _values);
       }
       
     };
 
-    
-    class GaussianLink1D : public FunctionLayer {
+    // u(t+1) = (1-alpha) * u(t) + alpha * i(t)
+    class LeakyIntegrator : public BufferedLayer {
     public:
-      GaussianLink1D() : FunctionLayer(2) {}
+      LeakyIntegrator(double alpha, typename values_type::size_type size):
+	BufferedLayer(1, size) {
+	_parameters[0] = alpha;
+      }
+
+      void update(void) override {
+	auto prev_itr = _prev->begin();
+	auto buffer_itr = _buffer->begin();
+	double alpha = _parameters[0];
+	for(auto& v: values()) {
+	  (*buffer_itr) = (1. - alpha) * v + alpha * *prev_itr;
+	  ++prev_itr;
+	  ++buffer_itr;
+	}
+      }
+      
     };
 
-    GaussianLink1D gaussian_link1D(void) {
-      return GaussianLink1D();
+
+    std::shared_ptr<LeakyIntegrator> leaky_integrator(double alpha, typename values_type::size_type size) {
+      return std::make_shared<LeakyIntegrator>(LeakyIntegrator(alpha, size));
     }
-
-
-
 
   }
+
 
   namespace function {
 
-    class GaussianLink1D: public ParametricLayer {
+
+    
+    
+    class VectorizedFunction : public neuralfield::layer::FunctionLayer {
     protected:
+      std::function<double(double)> _f;
     public:
+      VectorizedFunction(std::function<double(double)> f,
+			 typename values_type::size_type size):
+	FunctionLayer(0, size), _f(f) {
+      }
+
+      
+      void propagate_values() override {
+	// Ask the previous layer to update its values
+	_prev->propagate_values();
+
+	// And then compute the new values for this layer
+	auto prev_itr = _prev->begin();
+	for(auto &v: values()){ 
+	  v = _f(*prev_itr);
+	  ++prev_itr;
+	}
+      }
+      
+      void update(void) override {
+	
+      }
     };
+
+
+    std::shared_ptr<VectorizedFunction> function(std::string function_name, typename values_type::size_type size) {
+      if(function_name == "sigmoid") {
+	return std::make_shared<VectorizedFunction>([](double x) -> double { return 1.0 / (1.0 + exp(-x));}, size);
+      }
+      else if(function_name == "relu") {
+	return std::make_shared<VectorizedFunction>([](double x) -> double {
+	    if(x <= 0.0)
+	      return 0.0;
+	    else
+	      return x;
+	  }, size);
+      }
+      else {
+	throw std::invalid_argument(std::string("Unknown function : ") + function_name);
+      }
+    }
     
   }
 
+
+  namespace link {
+    class Gaussian : public neuralfield::layer::FunctionLayer {
+    protected:
+    public:
+      Gaussian(double Ap, double sp, typename values_type::size_type size):
+	neuralfield::layer::FunctionLayer(2, size) {
+	_parameters[0] = Ap;
+	_parameters[1] = sp;
+      }
+
+      void propagate_values() override {
+	// Ask the previous layer to update its values
+	_prev->propagate_values();
+
+	// And then compute the new values for this layer
+	auto prev_itr = _prev->begin();
+	for(auto &v: values()){ 
+	  v = _parameters[0] * (*prev_itr);
+	  ++prev_itr;
+	}
+      }
+      
+      void update(void) override {
+        return;
+      }
+    };
+      
+    std::shared_ptr<Gaussian> gaussian(double Ap, double sp, typename values_type::size_type size) {
+      return std::make_shared<Gaussian>(Ap, sp, size);
+    }
+
+    std::shared_ptr<Gaussian> gaussian(typename values_type::size_type size) {
+      return std::make_shared<Gaussian>(0.0, 0.1, size);
+    }
   
-
-
+  }
 }

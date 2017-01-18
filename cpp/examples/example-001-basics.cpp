@@ -25,10 +25,10 @@ int main(int argc, char* argv[]) {
 
 	// We define a link layer with a gaussian kernel
 	// which adds two parameters : amplitude and variance
-	auto exc = neuralfield::layer::gaussian_link1D();
+	//auto exc = neuralfield::layer::gaussian_link1D();
 	//network += exc;
 
-	auto inh = neuralfield::layer::gaussian_link1D();
+	//auto inh = neuralfield::layer::gaussian_link1D();
 	//network += inh;
 
 	//auto h = neuralfield::layer::constant();
