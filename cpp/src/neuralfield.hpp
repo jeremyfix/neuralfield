@@ -39,4 +39,5 @@
 #include <layers.hpp>
 //#include <transfer_functions.hpp>
 #include <integrator.hpp>
+#include <network.hpp>
 

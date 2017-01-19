@@ -22,37 +22,35 @@ int main(int argc, char* argv[]) {
 	
 	std::cout << "Input : " << *input << std::endl;
 
+	// A Network is a container of all the layers
+	// which will rule the evaluation of the layers
+	auto net = neuralfield::network();
+	
 	// We can instantiate a parametric functional layer
 	// providing the parameters directly
 	auto g_exc = neuralfield::link::gaussian(1.5, 2., N);
-	auto g_inh =  neuralfield::link::gaussian(1.3, 10., N);
-	auto fu = neuralfield::function::function("sigmoid", N);
-	auto u = neuralfield::layer::leaky_integrator(0.01, N);
+	net += g_exc;
 	
+	auto g_inh =  neuralfield::link::gaussian(1.3, 10., N);
+	net += g_inh;
+	
+	auto fu = neuralfield::function::function("sigmoid", N, "fu");
+	net += fu;
+	
+	auto u = neuralfield::layer::leaky_integrator(0.01, N);
+	net += u;
+
+	// We connect all the layers together
 	g_exc->connect(fu);
 	g_inh->connect(fu);
 	fu->connect(u);
 	u->connect(input);
+
+
+	net->init();
 	
-	auto f_layers = std::initializer_list<std::shared_ptr<neuralfield::layer::Layer> >({g_exc, g_inh, fu});
-	auto u_layers = std::initializer_list<std::shared_ptr<neuralfield::layer::BufferedLayer> >({u});
-
-	// At init, we need to propagate the potentials through the functions
-	for(auto& l: f_layers)
-	  l->propagate_values();
-
-	for(unsigned int i = 0 ; i < 1000 ; ++i) {
-	  // Updating all the BufferedLayers
-	  for(auto& l: u_layers)
-	    l->update();
-
-	  // Swapping them all
-	  for(auto& l: u_layers)
-	    l->swap();
-
-	  // Propagating through all the functional layers
-	  for(auto& l: f_layers)
-	    l->propagate_values();
+	for(unsigned int i = 0 ; i < 10 ; ++i) {
+	  net->step();
 	}
 	
 	std::cout << "Simulation ended" << std::endl;
