@@ -15,12 +15,18 @@ void fillInput(neuralfield::values_iterator begin,
 
 int main(int argc, char* argv[]) {
 
-	// This is the container that will gather all the layers
-	//auto network = neuralfield::network();
-
-	// The input layer fed with our Input datatype
-	auto input = neuralfield::layer::input<double>(10, fillInput);
-	// Add a !reference! of this layer to our container
+  {
+    // This is the container that will gather all the layers
+    auto network = neuralfield::network();
+    
+    // The input layer fed with our Input datatype
+    auto input = neuralfield::layer::input<double>(10, fillInput, "input");
+    network += input;
+    input->fill(2.0);
+    
+    std::shared_ptr<neuralfield::layer::InputLayer<double> > l = dynamic_cast<std::shared_ptr<neuralfield::layer::InputLayer<double>>>((*network)["input"]);
+  }
+    // Add a !reference! of this layer to our container
 	//network += input;
 
 	// We define a link layer with a gaussian kernel
@@ -59,7 +65,7 @@ int main(int argc, char* argv[]) {
 
 	// Let us now play a little bit with the network
 	// By first feeding an input	
-	input->fill(2.0);
+	
 
 	// We need a parameter vector. We can request a correctly size vector
 	//auto parameters = {1.0, ....}
