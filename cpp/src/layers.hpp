@@ -25,7 +25,6 @@
  *
  */
 
-#include <types.hpp>
 
 #include <functional>
 #include <iostream>
@@ -36,20 +35,33 @@
 #include <algorithm>
 #include <stdexcept>
 
+
+#include "types.hpp"
+#include "convolution_fftw.h"
+
 namespace neuralfield {
 
   namespace layer {   
 
     class Layer {
     protected:
-      parameters_type _parameters;
       std::string _label;
+      parameters_type _parameters;
+      values_type _values;
+      values_type::size_type _size;
     public:
+      Layer() = delete;
+      
       Layer(std::string label,
-	    typename parameters_type::size_type number_of_parameters):
+	    typename parameters_type::size_type number_of_parameters,
+	    typename values_type::size_type size):
+	_label(label),
 	_parameters(number_of_parameters),
-	_label(label){
+	_values(size),
+	_size(size) {
+	std::fill(_values.begin(), _values.end(), 0.0);
       }
+      
       Layer(const Layer&) = default;
 
       std::string label() {
@@ -59,45 +71,8 @@ namespace neuralfield {
       void set_parameters(std::initializer_list<double> params) {
 	assert(params.size() == _parameters.size());
 	std::copy(params.begin(), params.end(), _parameters.begin());
-      }
-
-      virtual void propagate_values() = 0;
-      virtual void update() = 0;
-      virtual void fill_values(values_type& ovalues) = 0;
-    };
-
-    
-    class ValuesLayer;
-    std::ostream& operator<< (std::ostream& os, const ValuesLayer& l);
-
-    /*! \class ValuesLayer
-     * @brief A layer hosting some values.
-     * A layer hosting some values. It provides the basis from which the InputLayer inherits
-     */
-    class ValuesLayer : public Layer {
-
-    protected:
-      values_type _values;
-
-    public:
-      ValuesLayer() = delete;
-      ValuesLayer(std::string label,
-		  typename parameters_type::size_type number_of_parameters,
-		  typename values_type::size_type size):
-	Layer(label, number_of_parameters),
-	_values(size)
-      {
-	std::fill(_values.begin(), _values.end(), 0.0);
-      }
+      }   
       
-      ValuesLayer(const ValuesLayer& other):
-	Layer(other),
-	_values(other._values) {
-      }
-
-      ValuesLayer& operator=(const ValuesLayer& other) = default;
-      friend std::ostream& operator<< (std::ostream& os, const ValuesLayer& l);
-
       const values_type& values() const {
 	return _values;
       }
@@ -105,21 +80,25 @@ namespace neuralfield {
       values_iterator begin() {
 	return _values.begin();
       }
+      
       values_iterator end() {
 	return _values.end();
       }
+      
       double operator()(values_type::size_type index) const{
 	return _values[index];
       }
-
-      void fill_values(values_type& ovalues) override {
+     void fill_values(values_type& ovalues) {
 	assert(ovalues.size() == _values.size());
 	std::copy(_values.begin(), _values.end(), ovalues.begin());
       }
+      
 
+      virtual void propagate_values() = 0;
+      virtual void update() = 0;
     };
 
-    std::ostream& operator<<(std::ostream& os, const ValuesLayer& l) {
+    std::ostream& operator<<(std::ostream& os, const Layer& l) {
       for(auto& v: l.values())
 	os << v << " ";
       return os;
@@ -127,25 +106,25 @@ namespace neuralfield {
 
     
 
-    class FunctionLayer: public ValuesLayer {
+    class FunctionLayer: public Layer {
     protected:
-      std::shared_ptr<ValuesLayer> _prev;
+      std::shared_ptr<Layer> _prev;
       
     public:
       FunctionLayer(std::string label,
 		    typename parameters_type::size_type number_of_parameters,
 		    typename values_type::size_type size):
-	ValuesLayer(label, number_of_parameters, size),
+	Layer(label, number_of_parameters, size),
 	_prev(nullptr) {
       }
 
       FunctionLayer(const FunctionLayer& other):
-	ValuesLayer(other),
+	Layer(other),
 	_prev(other._prev) {
 	
       }
       
-      void connect(std::shared_ptr<ValuesLayer> prev) {
+      void connect(std::shared_ptr<Layer> prev) {
 	_prev = prev;
       }
 
@@ -169,7 +148,7 @@ namespace neuralfield {
      * \sa example-001-basics.cpp
      */
     template<typename INPUT>
-    class InputLayer: public ValuesLayer {
+    class InputLayer: public Layer {
     protected:
       
     public:
@@ -184,7 +163,7 @@ namespace neuralfield {
 		 typename parameters_type::size_type number_of_parameters,
 		 typename values_type::size_type size,
 		 fill_input_type fill_input) :
-	ValuesLayer(label, number_of_parameters, size),
+	Layer(label, number_of_parameters, size),
 	_fill_input(fill_input) {}
 
 
@@ -206,22 +185,22 @@ namespace neuralfield {
     }
 
 
-    class BufferedLayer : public ValuesLayer {
+    class BufferedLayer : public Layer {
 
     protected:
-      std::shared_ptr<neuralfield::layer::ValuesLayer> _prev;
+      std::shared_ptr<neuralfield::layer::Layer> _prev;
       neuralfield::values_type _buffer;
     public:
       BufferedLayer(std::string label,
 		    typename parameters_type::size_type number_of_parameters,
 		    typename values_type::size_type size):
-	ValuesLayer(label, number_of_parameters, size),
+	Layer(label, number_of_parameters, size),
 	_prev(nullptr),
 	_buffer(size) {
 	std::fill(_buffer.begin(), _buffer.end(), 0.0);
       }
 
-      void connect(std::shared_ptr<ValuesLayer> prev) {
+      void connect(std::shared_ptr<Layer> prev) {
 	_prev = prev;
       }
       
@@ -320,13 +299,33 @@ namespace neuralfield {
   namespace link {
     class Gaussian : public neuralfield::layer::FunctionLayer {
     protected:
+      FFTW_Convolution::Workspace ws;
+      bool _toric;
+
+    private:
+
+      void init_convolution() {	
+	if(_toric) {
+	  values_type::size_type k_size = _size;
+	  FFTW_Convolution::init_workspace(ws, FFTW_Convolution::CIRCULAR_SAME, 1, _size, 1, k_size);
+	}
+	else {
+	  values_type::size_type k_size = 2*_size-1;
+	  FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME, 1, _size, 1, k_size);
+	  
+	}
+      }
+      
     public:
-      Gaussian(std::string label, double Ap, double sp, typename values_type::size_type size):
-	neuralfield::layer::FunctionLayer(label, 2, size) {
+      Gaussian(std::string label, double Ap, double sp, bool toric, typename values_type::size_type size):
+	neuralfield::layer::FunctionLayer(label, 2, size),
+	_toric(toric){
 	_parameters[0] = Ap;
 	_parameters[1] = sp;
+	init_convolution();
       }
 
+      
       void propagate_values() override {
 	// Ask the previous layer to update its values
 	_prev->propagate_values();
@@ -344,12 +343,12 @@ namespace neuralfield {
       }
     };
       
-    std::shared_ptr<neuralfield::layer::FunctionLayer> gaussian(double Ap, double sp, typename values_type::size_type size, std::string label="") {
-      return std::shared_ptr<neuralfield::layer::FunctionLayer>(new Gaussian(label, Ap, sp, size));
+    std::shared_ptr<neuralfield::layer::FunctionLayer> gaussian(double Ap, double sp, bool toric, typename values_type::size_type size, std::string label="") {
+      return std::shared_ptr<neuralfield::layer::FunctionLayer>(new Gaussian(label, Ap, sp, toric, size));
     }
 
     std::shared_ptr<neuralfield::layer::FunctionLayer> gaussian(typename values_type::size_type size, std::string label="") {
-      return std::shared_ptr<neuralfield::layer::FunctionLayer>(new Gaussian(label, 0.0, 0.1, size));
+      return std::shared_ptr<neuralfield::layer::FunctionLayer>(new Gaussian(label, 0.0, 0.1, true, size));
     }
   
   }

@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
     network += input;
     input->fill(2.0);
     
-    std::shared_ptr<neuralfield::layer::InputLayer<double> > l = dynamic_cast<std::shared_ptr<neuralfield::layer::InputLayer<double>>>((*network)["input"]);
+    //std::shared_ptr<neuralfield::layer::InputLayer<double> > l = dynamic_cast<std::shared_ptr<neuralfield::layer::InputLayer<double>>>((*network)["input"]);
   }
     // Add a !reference! of this layer to our container
 	//network += input;

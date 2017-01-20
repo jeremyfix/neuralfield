@@ -25,13 +25,15 @@ int main(int argc, char* argv[]) {
 	// A Network is a container of all the layers
 	// which will rule the evaluation of the layers
 	auto net = neuralfield::network();
+
+	bool toric = true;
 	
 	// We can instantiate a parametric functional layer
 	// providing the parameters directly
-	auto g_exc = neuralfield::link::gaussian(1.5, 2., N);
+	auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, N);
 	net += g_exc;
 	
-	auto g_inh =  neuralfield::link::gaussian(1.3, 10., N);
+	auto g_inh =  neuralfield::link::gaussian(1.3, 10., toric, N);
 	net += g_inh;
 	
 	auto fu = neuralfield::function::function("sigmoid", N, "fu");
