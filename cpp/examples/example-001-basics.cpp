@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     // The input layer fed with our Input datatype
     auto input = neuralfield::layer::input<double>(10, fillInput, "input");
     network += input;
-    input->fill(2.0);
+    //input->fill(2.0);
     
     //std::shared_ptr<neuralfield::layer::InputLayer<double> > l = dynamic_cast<std::shared_ptr<neuralfield::layer::InputLayer<double>>>((*network)["input"]);
   }

@@ -30,6 +30,7 @@
  * This library provides several tools to build up various neural fields
  * A neural field is built up from a stack of layers which can be evaluated synchronously or asynchronously
  *
+ * @example example-000.cpp
  * @example example-001-basics.cpp
  */
 
@@ -37,7 +38,6 @@
 #include <types.hpp>
 #include <tools.hpp>
 #include <layers.hpp>
-//#include <transfer_functions.hpp>
 #include <integrator.hpp>
 #include <network.hpp>
 

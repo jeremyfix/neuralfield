@@ -17,7 +17,7 @@ int main(int argc, char * argv[]) {
 
   bool toric = atoi(argv[1]);
   
-  int N = 10;
+  int N = 6;
   
   
   FFTW_Convolution::Workspace ws;
@@ -37,14 +37,23 @@ int main(int argc, char * argv[]) {
   
   double* kernel = new double[k_size];
   std::fill(kernel , kernel+k_size, 0.);
-  std::fill(kernel+(N/2-2), kernel + (N/2+2), 1.);
   
-  double* res = new double[N];
-  std::fill(res , res+N, 0.);
+  //std::fill(kernel+k_size/2-2 , kernel+k_size/2+2, 1.);
+  if(toric) {
+    std::fill(kernel, kernel + 3, 1.);
+    std::fill(kernel+k_size-1-1, kernel + k_size, 1.);
+  }
+  else {
+    std::fill(kernel+k_size/2-2, kernel + k_size/2+3, 1.);
+  }
+
+  int Nres = ws.w_dst;
+  double* res = new double[ws.w_dst];
+  std::fill(res , res+Nres, 0.);
   
 
   FFTW_Convolution::convolve(ws, src, kernel);
-  memcpy(res, ws.dst, N* sizeof(double));
+  memcpy(res, ws.dst, Nres* sizeof(double));
 
   std::cout << "Input : " << std::endl;
   print_array(src, N);
@@ -53,7 +62,7 @@ int main(int argc, char * argv[]) {
   print_array(kernel, k_size);
 
   std::cout << "result : " << std::endl;
-  print_array(res, N);
+  print_array(res, Nres);
   
   FFTW_Convolution::clear_workspace(ws);
 

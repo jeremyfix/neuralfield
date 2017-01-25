@@ -35,13 +35,13 @@
 namespace neuralfield {
 
   class Network;
+  std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::AbstractInputLayer> l);
   std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::FunctionLayer> l);
   std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::BufferedLayer> l);
-
   
   class Network {
   private:
-    //std::list<std::shared_ptr<neuralfield::layer::InputLayer> > _input_layers;
+    std::list<std::shared_ptr<neuralfield::layer::AbstractInputLayer> > _input_layers;
     std::list<std::shared_ptr<neuralfield::layer::FunctionLayer> > _function_layers;
     std::list<std::shared_ptr<neuralfield::layer::BufferedLayer> > _buffered_layers;
 
@@ -73,7 +73,7 @@ namespace neuralfield {
 	l->propagate_values();
     }
 
-    std::shared_ptr<neuralfield::layer::Layer> operator[](std::string label) {
+    std::shared_ptr<neuralfield::layer::Layer> get(std::string label) {
 
     auto it = _labelled_layers.find(label);
     if(it == _labelled_layers.end())
@@ -82,8 +82,8 @@ namespace neuralfield {
     return it->second;
     
   }
-    template<typename INPUT>
-    friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::InputLayer<INPUT> > l);
+
+    friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::AbstractInputLayer> l);
     friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::FunctionLayer> l);
     friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::BufferedLayer> l);
   };
@@ -94,21 +94,23 @@ namespace neuralfield {
     return std::make_shared<Network>();
   }
 
-  template<typename INPUT>
-  std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::InputLayer<INPUT>> l) {
-    //net->_input_layers.push_back(l);
+  std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::AbstractInputLayer> l) {
+    std::cout << "adding Input Layer" << std::endl;
+    net->_input_layers.push_back(l);
     net->register_labelled_layer(l);
       
     return net;
   }
   
   std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::FunctionLayer> l) {
+    std::cout << "adding function Layer" << std::endl;
     net->_function_layers.push_back(l);
     net->register_labelled_layer(l);
       
     return net;
   }
   std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::BufferedLayer> l) {
+    std::cout << "adding buffered Layer" << std::endl;
     net->_buffered_layers.push_back(l);
     net->register_labelled_layer(l);
     return net;

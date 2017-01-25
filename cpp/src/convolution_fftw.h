@@ -138,6 +138,12 @@ namespace FFTW_Convolution
     fftw_plan p_forw_kernel;
     fftw_plan p_back;
 
+    Workspace() {
+      in_src = out_src = in_kernel = out_kernel = 0;
+      dst_fft = dst = 0;
+      p_forw_src = p_forw_kernel = p_back = 0;
+    }
+    
   } Workspace;
 
   void init_workspace(Workspace & ws, Convolution_Mode mode, int h_src, int w_src, int h_kernel, int w_kernel)

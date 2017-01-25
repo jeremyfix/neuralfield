@@ -15,18 +15,20 @@ void fillInput(neuralfield::values_iterator begin,
 }
 
 int main(int argc, char* argv[]) {
-	neuralfield::values_type activities;
-
-	auto input = neuralfield::layer::input<Input>(N, fillInput);
-	input->fill(N/2);
-	
-	std::cout << "Input : " << *input << std::endl;
 
 	// A Network is a container of all the layers
 	// which will rule the evaluation of the layers
 	auto net = neuralfield::network();
 
-	bool toric = true;
+	
+	net += neuralfield::layer::input<Input>(N, fillInput, "input");
+
+	// To call the fill method, you need to cast the pointer
+	auto input = std::static_pointer_cast<neuralfield::layer::InputLayer<Input>>(net->get("input"));
+	input->fill(N/2);
+	std::cout << "Input : " << *input << std::endl;
+
+	bool toric = false;
 	
 	// We can instantiate a parametric functional layer
 	// providing the parameters directly
@@ -43,7 +45,7 @@ int main(int argc, char* argv[]) {
 	net += u;
 
 	// We connect all the layers together
-	g_exc->connect(fu);
+	g_exc->connect(net->get("fu"));
 	g_inh->connect(fu);
 	fu->connect(u);
 	u->connect(input);
@@ -51,7 +53,7 @@ int main(int argc, char* argv[]) {
 
 	net->init();
 	
-	for(unsigned int i = 0 ; i < 10 ; ++i) {
+	for(unsigned int i = 0 ; i < 1000 ; ++i) {
 	  net->step();
 	}
 	
