@@ -34,6 +34,7 @@
 #include <memory>
 #include <algorithm>
 #include <stdexcept>
+#include <list>
 
 
 #include "types.hpp"
@@ -133,6 +134,18 @@ namespace neuralfield {
       
       void update(void) override {
         return;
+      }
+
+      bool has_all_dependencies_in(std::list<std::shared_ptr<FunctionLayer>>::iterator begin,
+				   std::list<std::shared_ptr<FunctionLayer>>::iterator end) {
+	auto ptr = std::dynamic_pointer_cast<neuralfield::layer::FunctionLayer>(_prev);
+	if(ptr) {
+	  // _prev is a FunctionLayer
+	  // we then check if this layer is already in the evaluated layers [begin; end[
+	  return std::find(begin, end, _prev) != end;
+	}
+	else
+	  return true;
       }
       
     };
@@ -278,10 +291,7 @@ namespace neuralfield {
 
       
       void propagate_values() override {
-	// Ask the previous layer to update its values
-	_prev->propagate_values();
-
-	// And then compute the new values for this layer
+	// Compute the new values for this layer
 	auto prev_itr = _prev->begin();
 	for(auto &v: _values){ 
 	  v = _f(*prev_itr);
@@ -378,15 +388,8 @@ namespace neuralfield {
       }
       
       void propagate_values() override {
-	// Ask the previous layer to update its values
-	_prev->propagate_values();
-
-	// And then compute the new values for this layer
-	auto prev_itr = _prev->begin();
-	for(auto &v: _values){ 
-	  v = _parameters[0] * (*prev_itr);
-	  ++prev_itr;
-	}
+	//FFTW_Convolution::convolve(ws, src, kernel);
+	std::copy(ws.dst, ws.dst + _size, _values.begin());
       }
       
       void update(void) override {
