@@ -1,10 +1,10 @@
 # Generate the list of source files
 # using GLOB does not RECURSE
-#file(
-#	GLOB
-#	source_files
-#	*
-#)
+file(
+	GLOB
+	source_files
+	*.cpp
+)
 
 file(
 	GLOB
@@ -13,13 +13,13 @@ file(
 )
 
 # Define our library 
-#add_library(
-#	neuralfield
-#	SHARED
-#	${source_files}
-#)
-#target_compile_options(neuralfield PUBLIC ${PROJECT_CFLAGS})
-#target_link_libraries(neuralfield  ${PROJECT_LIBS})
+add_library(
+	neuralfield
+	SHARED
+	${source_files}
+)
+target_compile_options(neuralfield PUBLIC ${PROJECT_CFLAGS})
+target_link_libraries(neuralfield  ${PROJECT_LIBS})
 
 
 # Installation targets

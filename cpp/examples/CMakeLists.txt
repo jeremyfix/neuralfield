@@ -15,7 +15,7 @@ foreach(f ${usage_examples})
     get_filename_component(exampleName ${f} NAME_WE) 
     add_executable (${exampleName} ${f}) 
     target_compile_options(${exampleName} PUBLIC ${PROJECT_CFLAGS})
-    target_link_libraries(${exampleName} ${PROJECT_LIBS})
+    target_link_libraries(${exampleName} ${PROJECT_LIBS} neuralfield)
 
     install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${exampleName} 
             DESTINATION bin

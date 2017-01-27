@@ -35,7 +35,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <list>
-
+#include <map>
 
 #include "types.hpp"
 #include "convolution_fftw.h"
@@ -48,7 +48,7 @@ namespace neuralfield {
     protected:
       std::string _label;
       parameters_type _parameters;
-      std::list<int> _shape;
+      std::vector<int> _shape;
       values_type::size_type _size;
       values_type _values;
     public:
@@ -56,113 +56,76 @@ namespace neuralfield {
       
       Layer(std::string label,
 	    typename parameters_type::size_type number_of_parameters,
-	    std::list<int> shape):
-	_label(label),
-	_parameters(number_of_parameters),
-	_shape(shape) {
-
-	_size = 1;       
-	for(auto s: _shape)
-	  _size *= s;
-	
-	_values.resize(_size);
-	
-	std::fill(_values.begin(), _values.end(), 0.0);
-      }
+	    std::vector<int> shape);
       
       Layer(const Layer&) = default;
 
-      unsigned int size() const {
-	return _size;
-      }
+      unsigned int size() const;
+      std::vector<int> shape() const;
+      std::string label();
       
-      std::string label() {
-	return _label;
-      }
+      void set_parameters(std::initializer_list<double> params);
       
-      void set_parameters(std::initializer_list<double> params) {
-	assert(params.size() == _parameters.size());
-	std::copy(params.begin(), params.end(), _parameters.begin());
-      }   
+      values_iterator begin();
+      values_iterator end();
+      values_const_iterator begin() const;
+      values_const_iterator end() const;
       
-      values_iterator begin() {
-	return _values.begin();
-      }
-      
-      values_iterator end() {
-	return _values.end();
-      }
-
-      values_const_iterator begin() const{
-	return _values.begin();
-      }
-      
-      values_const_iterator end() const {
-	return _values.end();
-      }
-      
-      /*
-      double operator()(values_type::size_type index) const{
-	return _values[index];
-      }
-      */
-      void fill_values(values_type& ovalues) {
-	assert(ovalues.size() == _values.size());
-	std::copy(_values.begin(), _values.end(), ovalues.begin());
-      }
-      
-
-      virtual void propagate_values() = 0;
       virtual void update() = 0;
     };
 
-    std::ostream& operator<<(std::ostream& os, const Layer& l) {
-      for(auto const& v: l)
-	os << v << " ";
-      return os;
-    }
+    std::ostream& operator<<(std::ostream& os, const Layer& l);
 
+
+    class FunctionLayer;
+    std::shared_ptr<neuralfield::layer::FunctionLayer> operator+(std::shared_ptr<neuralfield::layer::FunctionLayer> l1,
+								 std::shared_ptr<neuralfield::layer::FunctionLayer> l2);
     
-
     class FunctionLayer: public Layer {
     protected:
-      std::shared_ptr<Layer> _prev;
+      std::list<std::shared_ptr<Layer> > _prevs;
       
     public:
       FunctionLayer(std::string label,
 		    typename parameters_type::size_type number_of_parameters,
-		    std::list<int> shape):
-	Layer(label, number_of_parameters, shape),
-	_prev(nullptr) {
+		    std::vector<int> shape):
+	Layer(label, number_of_parameters, shape) {
       }
 
       FunctionLayer(const FunctionLayer& other):
 	Layer(other),
-	_prev(other._prev) {
+	_prevs(other._prevs) {
 	
       }
       
       void connect(std::shared_ptr<Layer> prev) {
-	_prev = prev;
+	_prevs.push_back(prev);
       }
 
-      void propagate_values(void) override {
+      bool is_connected() {
+	bool connected = true;
+	auto it = _prevs.begin();
+	while(connected && it != _prevs.end()) {
+	  connected &= bool(*it);
+	  ++it;
+	}
+	return connected;
       }
       
       void update(void) override {
-        return;
+	if(! is_connected()) {
+	  throw std::runtime_error("The layer named '" + label() + "' has some undefined previous layers.");
+	}	
       }
 
-      bool has_all_dependencies_in(std::list<std::shared_ptr<FunctionLayer>>::iterator begin,
-				   std::list<std::shared_ptr<FunctionLayer>>::iterator end) {
-	auto ptr = std::dynamic_pointer_cast<neuralfield::layer::FunctionLayer>(_prev);
-	if(ptr) {
-	  // _prev is a FunctionLayer
-	  // we then check if this layer is already in the evaluated layers [begin; end[
-	  return std::find(begin, end, _prev) != end;
+      bool can_be_evaluated_from(const std::map<std::shared_ptr<Layer>, bool>& evaluation_status) {
+	bool can_be_evaluated = true;
+	auto it = _prevs.begin();
+	while(can_be_evaluated && it != _prevs.end()) {
+	  can_be_evaluated &= evaluation_status.at(*it);
+	  ++it;
 	}
-	else
-	  return true;
+	return can_be_evaluated;
       }
       
     };
@@ -181,14 +144,12 @@ namespace neuralfield {
     public:
       AbstractInputLayer(std::string label,
 			 typename parameters_type::size_type number_of_parameters,
-			 std::list<int> shape):
+			 std::vector<int> shape):
 	Layer(label, number_of_parameters, shape) {}
 
-      void propagate_values(void) override {
-      }
-      
       void update(void) override {
       }
+      
     };
 
     /*! \class InputLayer
@@ -210,17 +171,10 @@ namespace neuralfield {
 
       InputLayer(std::string label,
 		 typename parameters_type::size_type number_of_parameters,
-		 const std::list<int>& shape,
+		 std::vector<int> shape,
 		 fill_input_type fill_input) :
 	AbstractInputLayer(label, number_of_parameters, shape),
 	_fill_input(fill_input) {}
-
-
-      void propagate_values(void) override {
-      }
-      
-      void update(void) override {
-      }
       
       void fill(const input_type& input) {
 	_fill_input(this->_values.begin(), this->_values.end(), input);
@@ -253,7 +207,7 @@ namespace neuralfield {
     public:
       BufferedLayer(std::string label,
 		    typename parameters_type::size_type number_of_parameters,
-		    std::list<int> shape):
+		    std::vector<int> shape):
 	Layer(label, number_of_parameters, shape),
 	_prev(nullptr) {
 	_buffer.resize(this->size());
@@ -263,10 +217,15 @@ namespace neuralfield {
       void connect(std::shared_ptr<Layer> prev) {
 	_prev = prev;
       }
-      
-      void propagate_values(void) override {
-      }
 
+      bool is_connected() {
+	return bool(_prev);
+      }      
+
+      void update(void) override {
+	
+      }
+      
       void swap(void) {
 	std::swap(_buffer, _values);
       }
@@ -278,12 +237,16 @@ namespace neuralfield {
     public:
       LeakyIntegrator(std::string label,
 		      double alpha,
-		      std::list<int> shape):
+		      std::vector<int> shape):
 	BufferedLayer(label, 1, shape) {
 	_parameters[0] = alpha;
       }
 
       void update(void) override {
+	if(!_prev) {
+	  throw std::runtime_error("The layer named '" + label() + "' has an undefined previous layer.");
+	}
+	
 	auto prev_itr = _prev->begin();
 	auto buffer_itr = _buffer.begin();
 	double alpha = _parameters[0];
@@ -326,22 +289,22 @@ namespace neuralfield {
     public:
       VectorizedFunction(std::string label,
 			 std::function<double(double)> f,
-			 std::list<int> shape):
+			 std::vector<int> shape):
 	FunctionLayer(label, 0, shape), _f(f) {
       }
 
       
-      void propagate_values() override {
+      void update() override {
+	if(_prevs.size() != 1) {
+	  throw std::runtime_error("The layer named '" + label() + "' should be connected to one layer.");
+	}
+	
 	// Compute the new values for this layer
-	auto prev_itr = _prev->begin();
+	auto prev_itr = (*(_prevs.begin()))->begin();
 	for(auto &v: _values){ 
 	  v = _f(*prev_itr);
 	  ++prev_itr;
 	}
-      }
-      
-      void update(void) override {
-	
       }
     };
 
@@ -370,11 +333,11 @@ namespace neuralfield {
 								std::string label="") {
       return function(function_name, {size}, label);
     }
-        std::shared_ptr<neuralfield::layer::FunctionLayer> function(std::string function_name,
-								    int size1,
-								    int size2,
-								    std::string label="") {
-	  return function(function_name, {size1, size2}, label);
+    std::shared_ptr<neuralfield::layer::FunctionLayer> function(std::string function_name,
+								int size1,
+								int size2,
+								std::string label="") {
+      return function(function_name, {size1, size2}, label);
     }
   }
 
@@ -385,6 +348,7 @@ namespace neuralfield {
       FFTW_Convolution::Workspace ws;
       bool _toric;
       double * kernel;
+      double * src;
 
     private:
 
@@ -393,86 +357,147 @@ namespace neuralfield {
 	delete[] kernel;
 	kernel = 0;
 
-	int k_size;
-	int k_center;
-	std::function<int(int, int)> dist;
-	if(_toric) {
-	  k_size = _size;
-	  k_center = 0;
-	  FFTW_Convolution::init_workspace(ws, FFTW_Convolution::CIRCULAR_SAME, 1, _size, 1, k_size);
+	if(_shape.size() == 1) {
+	   int k_shape;
+	  int k_center;
+	  std::function<double(int, int)> dist;
 	  
-	  dist = [this] (int x, int y) {
-	    return std::min(abs(x-y), int(this->_size) - abs(x - y));
-	  };
+	  if(_toric) {
+	    k_shape = _shape[0];
+	    k_center = 0;
+	    FFTW_Convolution::init_workspace(ws, FFTW_Convolution::CIRCULAR_SAME, _shape[0], 1, k_shape, 1);
 	  
+	    dist = [k_shape] (int x_src, int x_dst) {
+	      int dx = std::min(abs(x_src-x_dst), k_shape - abs(x_src - x_dst));
+	      return dx;
+	    };
+	  
+	  }
+	  else {
+	    k_shape = 2*_shape[0]-1;
+	    k_center = k_shape/2;
+	    FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME,  _shape[0], 1, k_shape, 1);
+	  
+	    dist = [] (int x_src, int x_dst) {
+	      return fabs(x_src-x_dst);
+	    };
+	  }
+
+	  
+	  kernel = new double[k_shape];
+	  double * kptr = kernel;
+	  double A = _parameters[0];
+	  double s = _parameters[1];
+	  for(int i = 0 ; i < k_shape ; ++i, ++kptr) {
+	    double d = dist(i, k_center);
+	    *kptr = A * exp(-d*d / (2.0 * s*s));
+	  }
 	}
-	else {
-	  k_size = 2*_size-1;
-	  k_center = k_size/2;
-	  FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME, 1, _size, 1, k_size);
+	else if(_shape.size() == 2) {
+	  std::vector<int> k_shape(2);
+	  std::vector<int> k_center(2);
+	  std::function<double(int, int, int, int)> dist;
+	  if(_toric) {
+	    k_shape[0] = _shape[0];
+	    k_shape[1] = _shape[1];
+	    k_center[0] = 0;
+	    k_center[1] = 0;
+	    FFTW_Convolution::init_workspace(ws, FFTW_Convolution::CIRCULAR_SAME, _shape[0], _shape[1], k_shape[0], k_shape[1]);
 	  
-	  dist = [] (int x, int y) {
-	    return abs(x-y);
-	  };
+	    dist = [k_shape] (int x_src, int y_src, int x_dst, int y_dst) {
+	      int dx = std::min(abs(x_src-x_dst), k_shape[0] - abs(x_src - x_dst));
+	      int dy = std::min(abs(y_src-y_dst), k_shape[1] - abs(y_src - y_dst));
+	      return sqrt(dx*dx + dy*dy);
+	    };
 	  
-	}
+	  }
+	  else {
+	    k_shape[0] = 2*_shape[0]-1;
+	    k_shape[1] = 2*_shape[1]-1;
+	    k_center[0] = k_shape[0]/2;
+	    k_center[1] = k_shape[1]/2;
+	    FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME,  _shape[0], _shape[1], k_shape[0], k_shape[1]);
+	  
+	    dist = [] (int x_src, int y_src, int x_dst, int y_dst) {
+	      int dx = x_src-x_dst;
+	      int dy = y_src-y_dst;
+	      return sqrt(dx*dx + dy*dy);
+	    };
+	  }
 	
-	kernel = new double[k_size];
-	double A = _parameters[0];
-	double s = _parameters[1];
-	for(int i = 0 ; i < k_size ; ++i) {
-	  double d = dist(i, k_center);
-	  kernel[i] = A * exp(-d*d / (2.0 * s*s));
-	}
+	  kernel = new double[k_shape[0]*k_shape[1]];
+	  double A = _parameters[0];
+	  double s = _parameters[1];
+	  double * kptr = kernel;
+	  for(int i = 0 ; i < k_shape[0] ; ++i) {
+	    for(int j = 0 ; j < k_shape[1]; ++j, ++kptr) {
+	      double d = dist(i, j, k_center[0], k_center[1]);
+	      *kptr = A * exp(-d*d / (2.0 * s*s));
+	    }
+	  }
+	 }
+	else 
+	  throw std::runtime_error("I cannot handle convolution layers in dimension > 2");
       }
       
     public:
       Gaussian(std::string label,
 	       double A, double s, bool toric,
-	       std::list<int> shape):
+	       std::vector<int> shape):
 	neuralfield::layer::FunctionLayer(label, 2, shape),
 	_toric(toric),
-	kernel(0) {
-	
+	kernel(0)
+      {
+	src = new double[_size];
 	_parameters[0] = A;
 	_parameters[1] = s;
 	init_convolution();
 	
       }
-
+      
       ~Gaussian() {
 	FFTW_Convolution::clear_workspace(ws);
 	delete[] kernel;
+	delete[] src;
       }
       
-      void propagate_values() override {
-	//FFTW_Convolution::convolve(ws, src, kernel);
+      void update() override {
+	if(_prevs.size() != 1) {
+	  throw std::runtime_error("The layer named '" + label() + "' should be connected to one layer.");
+	}
+	
+	// Compute the new values for this layer
+	auto prev = *(_prevs.begin());
+	
+	std::copy(prev->begin(), prev->end(), src);
+	FFTW_Convolution::convolve(ws, src, kernel);
 	std::copy(ws.dst, ws.dst + _size, _values.begin());
-      }
-      
-      void update(void) override {
-        return;
-      }
+      }      
     };
       
     std::shared_ptr<neuralfield::layer::FunctionLayer> gaussian(double A, double s, bool toric,
 								std::initializer_list<int> shape,
-								std::string label="") {
-      return std::shared_ptr<Gaussian>(new Gaussian(label, A, s, toric, shape));
-    }
+								std::string label="");
     std::shared_ptr<neuralfield::layer::FunctionLayer> gaussian(double A, double s, bool toric,
 								int size,
-								std::string label="") {
-      return gaussian(A, s, toric, {size}, label);
-    }
+								std::string label="");
     std::shared_ptr<neuralfield::layer::FunctionLayer> gaussian(double A, double s, bool toric,
 								int size1, int size2,
-								std::string label="") {
-      return gaussian(A, s, toric, {size1, size2}, label);
-    }    
+								std::string label="");
 
     
-
+    
+    class SumLayer: public neuralfield::layer::FunctionLayer {
+    public:
+      SumLayer(std::string label,
+	       std::shared_ptr<Layer> l1,
+	       std::shared_ptr<Layer> l2);
+      void update(void) override;
+    };
   
+
   }
+
+  std::shared_ptr<neuralfield::layer::FunctionLayer> operator+(std::shared_ptr<neuralfield::layer::FunctionLayer> l1,
+							       std::shared_ptr<neuralfield::layer::FunctionLayer> l2);
 }
