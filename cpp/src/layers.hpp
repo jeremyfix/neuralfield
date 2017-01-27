@@ -48,23 +48,34 @@ namespace neuralfield {
     protected:
       std::string _label;
       parameters_type _parameters;
-      values_type _values;
+      std::list<int> _shape;
       values_type::size_type _size;
+      values_type _values;
     public:
       Layer() = delete;
       
       Layer(std::string label,
 	    typename parameters_type::size_type number_of_parameters,
-	    typename values_type::size_type size):
+	    std::list<int> shape):
 	_label(label),
 	_parameters(number_of_parameters),
-	_values(size),
-	_size(size) {
+	_shape(shape) {
+
+	_size = 1;       
+	for(auto s: _shape)
+	  _size *= s;
+	
+	_values.resize(_size);
+	
 	std::fill(_values.begin(), _values.end(), 0.0);
       }
       
       Layer(const Layer&) = default;
 
+      unsigned int size() const {
+	return _size;
+      }
+      
       std::string label() {
 	return _label;
       }
@@ -74,10 +85,6 @@ namespace neuralfield {
 	std::copy(params.begin(), params.end(), _parameters.begin());
       }   
       
-      const values_type& values() const {
-	return _values;
-      }
-      
       values_iterator begin() {
 	return _values.begin();
       }
@@ -85,11 +92,21 @@ namespace neuralfield {
       values_iterator end() {
 	return _values.end();
       }
+
+      values_const_iterator begin() const{
+	return _values.begin();
+      }
       
+      values_const_iterator end() const {
+	return _values.end();
+      }
+      
+      /*
       double operator()(values_type::size_type index) const{
 	return _values[index];
       }
-     void fill_values(values_type& ovalues) {
+      */
+      void fill_values(values_type& ovalues) {
 	assert(ovalues.size() == _values.size());
 	std::copy(_values.begin(), _values.end(), ovalues.begin());
       }
@@ -100,7 +117,7 @@ namespace neuralfield {
     };
 
     std::ostream& operator<<(std::ostream& os, const Layer& l) {
-      for(auto& v: l.values())
+      for(auto const& v: l)
 	os << v << " ";
       return os;
     }
@@ -114,8 +131,8 @@ namespace neuralfield {
     public:
       FunctionLayer(std::string label,
 		    typename parameters_type::size_type number_of_parameters,
-		    typename values_type::size_type size):
-	Layer(label, number_of_parameters, size),
+		    std::list<int> shape):
+	Layer(label, number_of_parameters, shape),
 	_prev(nullptr) {
       }
 
@@ -163,9 +180,9 @@ namespace neuralfield {
     class AbstractInputLayer : public Layer {
     public:
       AbstractInputLayer(std::string label,
-		 typename parameters_type::size_type number_of_parameters,
-			 typename values_type::size_type size):
-	Layer(label, number_of_parameters, size) {}
+			 typename parameters_type::size_type number_of_parameters,
+			 std::list<int> shape):
+	Layer(label, number_of_parameters, shape) {}
 
       void propagate_values(void) override {
       }
@@ -193,9 +210,9 @@ namespace neuralfield {
 
       InputLayer(std::string label,
 		 typename parameters_type::size_type number_of_parameters,
-		 typename values_type::size_type size,
+		 const std::list<int>& shape,
 		 fill_input_type fill_input) :
-	AbstractInputLayer(label, number_of_parameters, size),
+	AbstractInputLayer(label, number_of_parameters, shape),
 	_fill_input(fill_input) {}
 
 
@@ -212,10 +229,21 @@ namespace neuralfield {
 
 
     template<typename INPUT>
-    std::shared_ptr<AbstractInputLayer> input(values_type::size_type size, typename InputLayer<INPUT>::fill_input_type fill_input, std::string label="") {
-      return std::make_shared<InputLayer<INPUT> >(InputLayer<INPUT>(label, 0, size, fill_input));
+    std::shared_ptr<AbstractInputLayer> input(std::initializer_list<int> shape, typename InputLayer<INPUT>::fill_input_type fill_input, std::string label="") {
+      return std::make_shared<InputLayer<INPUT> >(InputLayer<INPUT>(label, 0, shape, fill_input));
+    }
+    
+    // Utilitary function for building up 1D InputLayer
+    template<typename INPUT>
+    std::shared_ptr<AbstractInputLayer> input(int size, typename InputLayer<INPUT>::fill_input_type fill_input, std::string label="") {
+      return std::make_shared<InputLayer<INPUT> >(InputLayer<INPUT>(label, 0, {size}, fill_input));
     }
 
+    // Utilitary function for building up 2D InputLayer
+    template<typename INPUT>
+    std::shared_ptr<AbstractInputLayer> input(int size1, int size2, typename InputLayer<INPUT>::fill_input_type fill_input, std::string label="") {
+      return std::make_shared<InputLayer<INPUT> >(InputLayer<INPUT>(label, 0, {size1, size2}, fill_input));
+    }
 
     class BufferedLayer : public Layer {
 
@@ -225,10 +253,10 @@ namespace neuralfield {
     public:
       BufferedLayer(std::string label,
 		    typename parameters_type::size_type number_of_parameters,
-		    typename values_type::size_type size):
-	Layer(label, number_of_parameters, size),
-	_prev(nullptr),
-	_buffer(size) {
+		    std::list<int> shape):
+	Layer(label, number_of_parameters, shape),
+	_prev(nullptr) {
+	_buffer.resize(this->size());
 	std::fill(_buffer.begin(), _buffer.end(), 0.0);
       }
 
@@ -250,8 +278,8 @@ namespace neuralfield {
     public:
       LeakyIntegrator(std::string label,
 		      double alpha,
-		      typename values_type::size_type size):
-	BufferedLayer(label, 1, size) {
+		      std::list<int> shape):
+	BufferedLayer(label, 1, shape) {
 	_parameters[0] = alpha;
       }
 
@@ -269,8 +297,21 @@ namespace neuralfield {
     };
 
 
-    std::shared_ptr<LeakyIntegrator> leaky_integrator(double alpha, typename values_type::size_type size, std::string label = "") {
-      return std::make_shared<LeakyIntegrator>(LeakyIntegrator(label, alpha, size));
+    std::shared_ptr<LeakyIntegrator> leaky_integrator(double alpha,
+						      std::initializer_list<int> shape,
+						      std::string label = "") {
+      return std::make_shared<LeakyIntegrator>(LeakyIntegrator(label, alpha, shape));
+    }
+    std::shared_ptr<LeakyIntegrator> leaky_integrator(double alpha,
+						      int size,
+						      std::string label = "") {
+      return std::make_shared<LeakyIntegrator>(LeakyIntegrator(label, alpha, {size}));
+    }
+    std::shared_ptr<LeakyIntegrator> leaky_integrator(double alpha,
+						      int size1,
+						      int size2,
+						      std::string label = "") {
+      return std::make_shared<LeakyIntegrator>(LeakyIntegrator(label, alpha, {size1, size2}));
     }
 
   }
@@ -285,8 +326,8 @@ namespace neuralfield {
     public:
       VectorizedFunction(std::string label,
 			 std::function<double(double)> f,
-			 typename values_type::size_type size):
-	FunctionLayer(label, 0, size), _f(f) {
+			 std::list<int> shape):
+	FunctionLayer(label, 0, shape), _f(f) {
       }
 
       
@@ -305,9 +346,11 @@ namespace neuralfield {
     };
 
 
-    std::shared_ptr<neuralfield::layer::FunctionLayer> function(std::string function_name, typename values_type::size_type size, std::string label="") {
+    std::shared_ptr<neuralfield::layer::FunctionLayer> function(std::string function_name,
+								std::initializer_list<int> shape,
+								std::string label="") {
       if(function_name == "sigmoid") {
-	return std::make_shared<VectorizedFunction>(label, [](double x) -> double { return 1.0 / (1.0 + exp(-x));}, size);
+	return std::make_shared<VectorizedFunction>(label, [](double x) -> double { return 1.0 / (1.0 + exp(-x));}, shape);
       }
       else if(function_name == "relu") {
 	return std::make_shared<VectorizedFunction>(label, [](double x) -> double {
@@ -315,13 +358,24 @@ namespace neuralfield {
 	      return 0.0;
 	    else
 	      return x;
-	  }, size);
+	  }, shape);
       }
       else {
 	throw std::invalid_argument(std::string("Unknown function : ") + function_name);
       }
     }
-    
+
+    std::shared_ptr<neuralfield::layer::FunctionLayer> function(std::string function_name,
+								int size,
+								std::string label="") {
+      return function(function_name, {size}, label);
+    }
+        std::shared_ptr<neuralfield::layer::FunctionLayer> function(std::string function_name,
+								    int size1,
+								    int size2,
+								    std::string label="") {
+	  return function(function_name, {size1, size2}, label);
+    }
   }
 
 
@@ -373,13 +427,17 @@ namespace neuralfield {
       }
       
     public:
-      Gaussian(std::string label, double A, double s, bool toric, typename values_type::size_type size):
-	neuralfield::layer::FunctionLayer(label, 2, size),
-	  _toric(toric),
-	  kernel(0) {
+      Gaussian(std::string label,
+	       double A, double s, bool toric,
+	       std::list<int> shape):
+	neuralfield::layer::FunctionLayer(label, 2, shape),
+	_toric(toric),
+	kernel(0) {
+	
 	_parameters[0] = A;
 	_parameters[1] = s;
 	init_convolution();
+	
       }
 
       ~Gaussian() {
@@ -397,13 +455,24 @@ namespace neuralfield {
       }
     };
       
-    std::shared_ptr<neuralfield::layer::FunctionLayer> gaussian(double A, double s, bool toric, typename values_type::size_type size, std::string label="") {
-      return std::shared_ptr<Gaussian>(new Gaussian(label, A, s, toric, size));
+    std::shared_ptr<neuralfield::layer::FunctionLayer> gaussian(double A, double s, bool toric,
+								std::initializer_list<int> shape,
+								std::string label="") {
+      return std::shared_ptr<Gaussian>(new Gaussian(label, A, s, toric, shape));
     }
+    std::shared_ptr<neuralfield::layer::FunctionLayer> gaussian(double A, double s, bool toric,
+								int size,
+								std::string label="") {
+      return gaussian(A, s, toric, {size}, label);
+    }
+    std::shared_ptr<neuralfield::layer::FunctionLayer> gaussian(double A, double s, bool toric,
+								int size1, int size2,
+								std::string label="") {
+      return gaussian(A, s, toric, {size1, size2}, label);
+    }    
 
-    std::shared_ptr<neuralfield::layer::FunctionLayer> gaussian(typename values_type::size_type size, std::string label="") {
-      return std::shared_ptr<Gaussian>(new Gaussian(label, 0.0, 0.1, true, size));
-    }
+    
+
   
   }
 }
