@@ -62,6 +62,19 @@ namespace neuralfield {
 
     std::shared_ptr<neuralfield::layer::Layer> get(std::string label);
 
+    template<typename INPUT>
+    std::shared_ptr<neuralfield::input::Layer<INPUT> > get_input(std::string label) {
+      auto it = _labelled_layers.find(label);
+      if(it == _labelled_layers.end())
+	throw  std::logic_error("Cannot find layer labeled " + label);
+      auto resptr = std::dynamic_pointer_cast<neuralfield::input::Layer<INPUT> >(it->second);
+      
+      if(resptr)
+	return resptr;
+      else
+	throw std::runtime_error("Cannot retrieve input layer named " + label + " with the given type");
+    }
+
     friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::input::AbstractLayer> l);
     friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::function::Layer> l);
     friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::buffered::Layer> l);

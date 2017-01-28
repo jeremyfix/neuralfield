@@ -64,8 +64,8 @@ int main(int argc, char* argv[]) {
     
     auto net = neuralfield::network();
 
-    auto input = neuralfield::input::input<Input>(N, fillInput, "input");
-    net += input;
+    net += neuralfield::input::input<Input>(N, fillInput, "input");
+    auto input = net->get_input<Input>("input");
 
     auto f1 = neuralfield::function::function("sigmoid", N, "f1");
     net += f1;
@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
     auto net = neuralfield::network();
 
     net += neuralfield::input::input<Input>(N, fillInput, "input");
-    auto input = std::static_pointer_cast<neuralfield::input::Layer<Input>>(net->get("input"));
+    auto input = net->get_input<Input>("input");
 
     bool toric = false;
     auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, N, "gexc");
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
     g_exc->connect(fu);
     g_inh->connect(fu);
     fu->connect(u);
-    //u->connect(input + g_exc + g_inh);
+    u->connect(input + g_exc + g_inh);
     
     net->init();
     
