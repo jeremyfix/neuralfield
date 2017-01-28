@@ -59,24 +59,29 @@ int main(int argc, char* argv[]) {
   }
 
   {
+    std::cout << std::string(10, '*') << std::endl;
     int N = 10;
     
     auto net = neuralfield::network();
-    
-    net += neuralfield::input::input<Input>(N, fillInput, "input");
-    auto input = std::static_pointer_cast<neuralfield::input::Layer<Input>>(net->get("input"));
+
+    auto input = neuralfield::input::input<Input>(N, fillInput, "input");
+    net += input;
 
     auto f1 = neuralfield::function::function("sigmoid", N, "f1");
     net += f1;
 
     auto f2 = neuralfield::function::function("relu", N, "f2");
     net += f2;
+    
+    auto f12 = f1 + f2;
+    net += f12;
 
-    //auto f12 = f1 + f2;
-    //net += f12;
 
+    f1->connect(input);
+    f2->connect(input);
+    
     net->init();
-    input->fill(N/2);
+    //input->fill(N/2);
     net->step();
     
   }

@@ -95,7 +95,4 @@ namespace neuralfield {
       void update(void) override;
     };
   }
-
-  std::shared_ptr<neuralfield::function::Layer> operator+(std::shared_ptr<neuralfield::layer::Layer> l1,
-							  std::shared_ptr<neuralfield::layer::Layer> l2);
 }

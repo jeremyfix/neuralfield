@@ -163,19 +163,18 @@ neuralfield::link::SumLayer::SumLayer(std::string label,
 }
 
 void neuralfield::link::SumLayer::update(void) {
+  std::cout << "Updating " << label() << std::endl;
+  
   auto it_self = begin();
   auto it_prevs = _prevs.begin();
-	
-  auto it1 = (*it_prevs++)->begin();
-  auto it2 = (*it_prevs++)->begin();
+  auto l1 = *(it_prevs++);
+  auto l2 = *(it_prevs++);
+  std::cout << "from " << l1->label() << " and " << l2->label() << std::endl;
+
+  auto it1 = l1->begin();
+  auto it2 = l2->begin();
   while(it_self != end())
-    *it_self = (*it1++) + (*it2++);
+    *(it_self++) = (*it1++) + (*it2++);
 }
 
-std::shared_ptr<neuralfield::function::Layer> neuralfield::operator+(std::shared_ptr<neuralfield::layer::Layer> l1,
-								     std::shared_ptr<neuralfield::layer::Layer> l2) {
-  std::string label("");
-  if(l1->label() != "" && l2->label() != "")
-    label = l1->label() + "+" + l2->label();
-  return std::make_shared<neuralfield::link::SumLayer>(label, l1, l2);
-}
+

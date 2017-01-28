@@ -1,4 +1,7 @@
 #include "layers.hpp"
+#include "function_layers.hpp"
+#include "link_layers.hpp"
+
 
 neuralfield::layer::Layer::Layer(std::string label,
 			  typename neuralfield::parameters_type::size_type number_of_parameters,
@@ -57,6 +60,14 @@ std::ostream& neuralfield::layer::operator<<(std::ostream& os, const neuralfield
   return os;
 }
 
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::layer::operator+(std::shared_ptr<neuralfield::layer::Layer> l1,
+								     std::shared_ptr<neuralfield::layer::Layer> l2) {
+  std::string label("");
+  if(l1->label() != "" && l2->label() != "")
+    label = l1->label() + "+" + l2->label();
+  return std::make_shared<neuralfield::link::SumLayer>(label, l1, l2);
+}
 
 
 

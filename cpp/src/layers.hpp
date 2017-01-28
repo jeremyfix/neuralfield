@@ -42,8 +42,19 @@
 
 namespace neuralfield {
 
+  namespace function {
+    class Layer;
+  }
+  namespace link {
+    class SumLayer;
+  }
+  
   namespace layer {   
 
+    class Layer;
+    std::shared_ptr<neuralfield::function::Layer> operator+(std::shared_ptr<neuralfield::layer::Layer> l1,
+							    std::shared_ptr<neuralfield::layer::Layer> l2);
+    
     class Layer {
     protected:
       std::string _label;
