@@ -26,7 +26,7 @@ void neuralfield::Network::init() {
   for(auto l: _function_layers)
     evaluation_status[l] = false;
       
-  std::list<std::shared_ptr<neuralfield::layer::FunctionLayer> > reordered_layers;
+  std::list<std::shared_ptr<neuralfield::function::Layer> > reordered_layers;
   bool at_least_one_insertion;
       
   while(_function_layers.size() != 0) {
@@ -91,18 +91,18 @@ std::shared_ptr<neuralfield::Network> neuralfield::network() {
   return std::make_shared<neuralfield::Network>();
 }
 
-std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::layer::AbstractInputLayer> l) {
+std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::input::AbstractLayer> l) {
   net->_input_layers.push_back(l);
   net->register_labelled_layer(l); 
   return net;
 }
   
-std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::layer::FunctionLayer> l) {
+std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::function::Layer> l) {
   net->_function_layers.push_back(l);
   net->register_labelled_layer(l);
   return net;
 }
-std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::layer::BufferedLayer> l) {
+std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::buffered::Layer> l) {
   net->_buffered_layers.push_back(l);
   net->register_labelled_layer(l);
   return net;

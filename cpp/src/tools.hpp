@@ -29,41 +29,41 @@
 #include <cstdlib>
 
 namespace neuralfield {
-	namespace random {
+  namespace random {
 
-		/**
-		 * @return a random value in [min,max[
-		 */
-		inline double uniform(double min,double max) {
-			return min + (max-min)*(std::rand()/(RAND_MAX+1.0));
-		}
+    /**
+     * @return a random value in [min,max[
+     */
+    inline double uniform(double min,double max) {
+      return min + (max-min)*(std::rand()/(RAND_MAX+1.0));
+    }
 
-		/**
-		 * @return a random integer in [0,max[
-		 */
-		template<typename VALUE>
-			inline VALUE uniform(VALUE max) {
-				return (VALUE)(max*(std::rand()/(RAND_MAX+1.0)));
-			}
+    /**
+     * @return a random integer in [0,max[
+     */
+    template<typename VALUE>
+    inline VALUE uniform(VALUE max) {
+      return (VALUE)(max*(std::rand()/(RAND_MAX+1.0)));
+    }
 
-		/**
-		 * @param p in [0,1]
-		 * @return true with the probability proba.
-		 */
-		inline bool proba(double p) {
-			return uniform(0,1)<p;
-		}
+    /**
+     * @param p in [0,1]
+     * @return true with the probability proba.
+     */
+    inline bool proba(double p) {
+      return uniform(0,1)<p;
+    }
 
-		/**
-		 * @brief Draws a sample from a normal distribution
-		 * @param mu : mean
-		 * @param std : standard deviation
-		 */
-		inline bool randn(double mu, double std) {
-			return 0.0;
-		}
+    /**
+     * @brief Draws a sample from a normal distribution
+     * @param mu : mean
+     * @param std : standard deviation
+     */
+    inline bool randn(double mu, double std) {
+      return 0.0;
+    }
 
 
-	}
+  }
 }
 

@@ -31,21 +31,24 @@
 
 #include "types.hpp"
 #include "layers.hpp"
+#include "input_layers.hpp"
+#include "function_layers.hpp"
+#include "buffered_layers.hpp"
 
 namespace neuralfield {
 
   class Network;
-  std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::AbstractInputLayer> l);
-  std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::FunctionLayer> l);
-  std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::BufferedLayer> l);
+  std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::input::AbstractLayer> l);
+  std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::function::Layer> l);
+  std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::buffered::Layer> l);
   
   std::shared_ptr<Network> network();
   
   class Network {
   private:
-    std::list<std::shared_ptr<neuralfield::layer::AbstractInputLayer> > _input_layers;
-    std::list<std::shared_ptr<neuralfield::layer::FunctionLayer> > _function_layers;
-    std::list<std::shared_ptr<neuralfield::layer::BufferedLayer> > _buffered_layers;
+    std::list<std::shared_ptr<neuralfield::input::AbstractLayer> > _input_layers;
+    std::list<std::shared_ptr<neuralfield::function::Layer> > _function_layers;
+    std::list<std::shared_ptr<neuralfield::buffered::Layer> > _buffered_layers;
     
     std::map<std::string, std::shared_ptr<neuralfield::layer::Layer>> _labelled_layers;
     
@@ -59,9 +62,9 @@ namespace neuralfield {
 
     std::shared_ptr<neuralfield::layer::Layer> get(std::string label);
 
-    friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::AbstractInputLayer> l);
-    friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::FunctionLayer> l);
-    friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::layer::BufferedLayer> l);
+    friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::input::AbstractLayer> l);
+    friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::function::Layer> l);
+    friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::buffered::Layer> l);
   };
 
 }

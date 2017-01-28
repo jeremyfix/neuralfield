@@ -38,6 +38,10 @@
 #include <types.hpp>
 #include <tools.hpp>
 #include <layers.hpp>
+#include <input_layers.hpp>
+#include <function_layers.hpp>
+#include <link_layers.hpp>
+#include <buffered_layers.hpp>
 #include <integrator.hpp>
 #include <network.hpp>
 

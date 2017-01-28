@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     auto network = neuralfield::network();
     
     // The input layer fed with our Input datatype
-    auto input = neuralfield::layer::input<double>(10, fillInput, "input");
+    auto input = neuralfield::input::input<double>(10, fillInput, "input");
     network += input;
     //input->fill(2.0);
     

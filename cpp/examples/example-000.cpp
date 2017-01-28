@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
     int N = 10;
     bool toric = true;
 
-    auto input = neuralfield::layer::input<Input>(N, fillInput, "input");
+    auto input = neuralfield::input::input<Input>(N, fillInput, "input");
     net += input;
     
     auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, N,"gexc");
@@ -63,8 +63,8 @@ int main(int argc, char* argv[]) {
     
     auto net = neuralfield::network();
     
-    net += neuralfield::layer::input<Input>(N, fillInput, "input");
-    auto input = std::static_pointer_cast<neuralfield::layer::InputLayer<Input>>(net->get("input"));
+    net += neuralfield::input::input<Input>(N, fillInput, "input");
+    auto input = std::static_pointer_cast<neuralfield::input::Layer<Input>>(net->get("input"));
 
     auto f1 = neuralfield::function::function("sigmoid", N, "f1");
     net += f1;
@@ -72,8 +72,8 @@ int main(int argc, char* argv[]) {
     auto f2 = neuralfield::function::function("relu", N, "f2");
     net += f2;
 
-    auto f12 = f1 + f2;
-    net += f12;
+    //auto f12 = f1 + f2;
+    //net += f12;
 
     net->init();
     input->fill(N/2);
@@ -90,8 +90,8 @@ int main(int argc, char* argv[]) {
     
     auto net = neuralfield::network();
 
-    net += neuralfield::layer::input<Input>(N, fillInput, "input");
-    auto input = std::static_pointer_cast<neuralfield::layer::InputLayer<Input>>(net->get("input"));
+    net += neuralfield::input::input<Input>(N, fillInput, "input");
+    auto input = std::static_pointer_cast<neuralfield::input::Layer<Input>>(net->get("input"));
 
     bool toric = false;
     auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, N, "gexc");
@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
     
     auto net = neuralfield::network();
 
-    auto input = neuralfield::layer::input<Input>(N, N, fillInput, "input");
+    auto input = neuralfield::input::input<Input>(N, N, fillInput, "input");
     net += input;
 
     bool toric = false;
@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
     auto fu = neuralfield::function::function("sigmoid", N, N);
     net += fu;
 
-    auto u = neuralfield::layer::leaky_integrator(0.01, N, N, "u");
+    auto u = neuralfield::buffered::leaky_integrator(0.01, N, N, "u");
     net += u;
     
     g_exc->connect(fu);
@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
     
     auto net = neuralfield::network();
 
-    auto input = neuralfield::layer::input<Input>(N, fillInput, "input");
+    auto input = neuralfield::input::input<Input>(N, fillInput, "input");
     net += input;
 
     bool toric = false;
@@ -167,7 +167,7 @@ int main(int argc, char* argv[]) {
     auto fu = neuralfield::function::function("sigmoid", N);
     net += fu;
 
-    auto u = neuralfield::layer::leaky_integrator(0.01, N);
+    auto u = neuralfield::buffered::leaky_integrator(0.01, N);
     net += u;
     
     g_exc->connect(fu);
@@ -189,10 +189,10 @@ int main(int argc, char* argv[]) {
     auto net = neuralfield::network();
 
 	
-    net += neuralfield::layer::input<Input>(N, fillInput, "input");
+    net += neuralfield::input::input<Input>(N, fillInput, "input");
 
     // To call the fill method, you need to cast the pointer
-    auto input = std::static_pointer_cast<neuralfield::layer::InputLayer<Input>>(net->get("input"));
+    auto input = std::static_pointer_cast<neuralfield::input::Layer<Input>>(net->get("input"));
     input->fill(N/2);
     std::cout << "Input : " << *input << std::endl;
 
@@ -209,7 +209,7 @@ int main(int argc, char* argv[]) {
     auto fu = neuralfield::function::function("sigmoid", N, "fu");
     net += fu;
 	
-    auto u = neuralfield::layer::leaky_integrator(0.01, N);
+    auto u = neuralfield::buffered::leaky_integrator(0.01, N);
     net += u;
 
     // We connect all the layers together

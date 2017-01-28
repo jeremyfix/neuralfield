@@ -25,56 +25,60 @@
  *
  */
 
-
-#include <functional>
-#include <iostream>
-#include <string>
-#include <cassert>
-#include <initializer_list>
 #include <memory>
 #include <algorithm>
-#include <stdexcept>
-#include <list>
-#include <map>
+#include <vector>
 
+#include "layers.hpp"
 #include "types.hpp"
-#include "convolution_fftw.h"
 
 namespace neuralfield {
 
-  namespace layer {   
+  namespace buffered {
+    
+    class Layer : public neuralfield::layer::Layer {
 
-    class Layer {
     protected:
-      std::string _label;
-      parameters_type _parameters;
-      std::vector<int> _shape;
-      values_type::size_type _size;
-      values_type _values;
+      std::shared_ptr<neuralfield::layer::Layer> _prev;
+      neuralfield::values_type _buffer;
     public:
-      Layer() = delete;
-      
       Layer(std::string label,
 	    typename parameters_type::size_type number_of_parameters,
 	    std::vector<int> shape);
-      
-      Layer(const Layer&) = default;
 
-      unsigned int size() const;
-      std::vector<int> shape() const;
-      std::string label();
+      void connect(std::shared_ptr<neuralfield::layer::Layer> prev);
+
+      bool is_connected();  
+
+      void update(void) override;
       
-      void set_parameters(std::initializer_list<double> params);
+      void swap(void);
       
-      values_iterator begin();
-      values_iterator end();
-      values_const_iterator begin() const;
-      values_const_iterator end() const;
-      
-      virtual void update() = 0;
     };
 
-    std::ostream& operator<<(std::ostream& os, const Layer& l);
+    // u(t+1) = (1-alpha) * u(t) + alpha * i(t)
+    class LeakyIntegrator : public Layer {
+    public:
+      LeakyIntegrator(std::string label,
+		      double alpha,
+		      std::vector<int> shape);
 
+      void update(void) override;
+    };
+
+    std::shared_ptr<LeakyIntegrator> leaky_integrator(double alpha,
+						      std::initializer_list<int> shape,
+						      std::string label = "");
+    
+    std::shared_ptr<LeakyIntegrator> leaky_integrator(double alpha,
+						      int size,
+						      std::string label = "");
+    
+    std::shared_ptr<LeakyIntegrator> leaky_integrator(double alpha,
+						      int size1,
+						      int size2,
+						      std::string label = "");
+
+      
   }
 }
