@@ -49,9 +49,7 @@ namespace neuralfield {
       void connect(std::shared_ptr<neuralfield::layer::Layer> prev);
 
       bool is_connected();  
-
       void update(void) override;
-      
       void swap(void);
       
     };

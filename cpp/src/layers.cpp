@@ -4,8 +4,8 @@
 #include "network.hpp"
 
 neuralfield::layer::Layer::Layer(std::string label,
-			  typename neuralfield::parameters_type::size_type number_of_parameters,
-			  std::vector<int> shape):
+				 typename neuralfield::parameters_type::size_type number_of_parameters,
+				 std::vector<int> shape):
   _label(label),
   _parameters(number_of_parameters),
   _shape(shape) {
@@ -53,6 +53,9 @@ neuralfield::values_const_iterator neuralfield::layer::Layer::end() const {
   return _values.end();
 }
 
+void neuralfield::layer::Layer::reset() {
+  std::fill(_values.begin(), _values.end(), 0.0);
+}
 
 std::ostream& neuralfield::layer::operator<<(std::ostream& os, const neuralfield::layer::Layer& l) {
   for(auto const& v: l)
@@ -62,7 +65,7 @@ std::ostream& neuralfield::layer::operator<<(std::ostream& os, const neuralfield
 
 
 std::shared_ptr<neuralfield::function::Layer> neuralfield::layer::operator+(std::shared_ptr<neuralfield::layer::Layer> l1,
-								     std::shared_ptr<neuralfield::layer::Layer> l2) {
+									    std::shared_ptr<neuralfield::layer::Layer> l2) {
   std::string label("");
   if(l1->label() != "" && l2->label() != "")
     label = l1->label() + "+" + l2->label();

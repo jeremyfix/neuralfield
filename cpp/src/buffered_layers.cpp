@@ -21,7 +21,7 @@ bool neuralfield::buffered::Layer::is_connected() {
 void neuralfield::buffered::Layer::update(void) {
 	
 }
-      
+
 void neuralfield::buffered::Layer::swap(void) {
   std::swap(_buffer, _values);
 }

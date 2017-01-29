@@ -64,6 +64,7 @@ namespace neuralfield {
     Network();
 
     void init();
+    void reset();
     void step();
     void print();
     

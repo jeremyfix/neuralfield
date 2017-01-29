@@ -81,7 +81,8 @@ namespace neuralfield {
       values_iterator end();
       values_const_iterator begin() const;
       values_const_iterator end() const;
-      
+
+      void reset();
       virtual void update() = 0;
     };
 

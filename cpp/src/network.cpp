@@ -97,6 +97,13 @@ void neuralfield::Network::init() {
     l->update();
 }
 
+void neuralfield::Network::reset() {
+  for(auto l: _buffered_layers)
+    l->reset();
+  for(auto l: _function_layers)
+    l->update();
+}
+
 void neuralfield::Network::step() {
   // The function layers are supposed to be loaded with their updated values
   // we therefore begin by evaluating all the buffered layers
