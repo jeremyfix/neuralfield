@@ -33,7 +33,6 @@ void neuralfield::link::Gaussian::init_convolution() {
       };
     }
 
-	  
     kernel = new double[k_shape];
     double * kptr = kernel;
     double A = _parameters[0];
