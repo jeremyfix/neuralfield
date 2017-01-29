@@ -38,11 +38,14 @@
 namespace neuralfield {
 
   class Network;
+
+  std::shared_ptr<Network> network(void);
+  std::shared_ptr<Network> get_current_network(void);
+  
   std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::input::AbstractLayer> l);
   std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::function::Layer> l);
   std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::buffered::Layer> l);
   
-  std::shared_ptr<Network> network();
   
   class Network {
   private:
@@ -53,13 +56,17 @@ namespace neuralfield {
     std::map<std::string, std::shared_ptr<neuralfield::layer::Layer>> _labelled_layers;
     
     void register_labelled_layer(std::shared_ptr<neuralfield::layer::Layer> layer);
+
+    static std::shared_ptr<Network> current_network;
     
   public:
+    
     Network();
 
     void init();
     void step();
-
+    void print();
+    
     std::shared_ptr<neuralfield::layer::Layer> get(std::string label);
 
     template<typename INPUT>
@@ -75,6 +82,20 @@ namespace neuralfield {
 	throw std::runtime_error("Cannot retrieve input layer named " + label + " with the given type");
     }
 
+    template<typename INPUT>
+    void set_input(std::string label, INPUT inp) {
+      auto l = get_input<INPUT>(label);
+      l->fill(inp);
+
+      // We then propagate the new values through all the function layers
+      // TODO: this can be speed up by propagating only through the layers
+      //       that depend on this layer, recursively
+      for(auto l: _function_layers)
+	l->update();  
+    }
+    
+    friend std::shared_ptr<Network> network(void);
+    friend std::shared_ptr<Network> get_current_network(void);
     friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::input::AbstractLayer> l);
     friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::function::Layer> l);
     friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::buffered::Layer> l);

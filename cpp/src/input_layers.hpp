@@ -31,6 +31,10 @@
 #include "layers.hpp"
 
 namespace neuralfield {
+
+  class Network;
+  std::shared_ptr<Network> get_current_network();
+  
   namespace input {
     
     /*! \class AbstractInputLayer
@@ -65,9 +69,9 @@ namespace neuralfield {
       fill_input_type _fill_input; //!< A function for feeding a values_type from an INPUT
 
       Layer(std::string label,
-		 typename parameters_type::size_type number_of_parameters,
-		 std::vector<int> shape,
-		 fill_input_type fill_input) :
+	    typename parameters_type::size_type number_of_parameters,
+	    std::vector<int> shape,
+	    fill_input_type fill_input) :
 	AbstractLayer(label, number_of_parameters, shape),
 	_fill_input(fill_input) {}
       
@@ -79,19 +83,22 @@ namespace neuralfield {
 
     template<typename INPUT>
     std::shared_ptr<AbstractLayer> input(std::initializer_list<int> shape, typename Layer<INPUT>::fill_input_type fill_input, std::string label="") {
-      return std::make_shared<Layer<INPUT> >(Layer<INPUT>(label, 0, shape, fill_input));
+      auto l = std::make_shared<Layer<INPUT> >(Layer<INPUT>(label, 0, shape, fill_input));
+      auto net = neuralfield::get_current_network();
+      net += l;
+      return l;
     }
     
     // Utilitary function for building up 1D Layer
     template<typename INPUT>
     std::shared_ptr<AbstractLayer> input(int size, typename Layer<INPUT>::fill_input_type fill_input, std::string label="") {
-      return std::make_shared<Layer<INPUT> >(Layer<INPUT>(label, 0, {size}, fill_input));
+      return neuralfield::input::input<INPUT>({size}, fill_input, label);
     }
 
     // Utilitary function for building up 2D Layer
     template<typename INPUT>
     std::shared_ptr<AbstractLayer> input(int size1, int size2, typename Layer<INPUT>::fill_input_type fill_input, std::string label="") {
-      return std::make_shared<Layer<INPUT> >(Layer<INPUT>(label, 0, {size1, size2}, fill_input));
+      return neuralfield::input::input<INPUT>({size1, size2}, fill_input, label);
     }
   }
 }

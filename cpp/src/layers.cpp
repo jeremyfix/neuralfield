@@ -1,7 +1,7 @@
 #include "layers.hpp"
 #include "function_layers.hpp"
 #include "link_layers.hpp"
-
+#include "network.hpp"
 
 neuralfield::layer::Layer::Layer(std::string label,
 			  typename neuralfield::parameters_type::size_type number_of_parameters,
@@ -66,7 +66,10 @@ std::shared_ptr<neuralfield::function::Layer> neuralfield::layer::operator+(std:
   std::string label("");
   if(l1->label() != "" && l2->label() != "")
     label = l1->label() + "+" + l2->label();
-  return std::make_shared<neuralfield::link::SumLayer>(label, l1, l2);
+  auto l = std::make_shared<neuralfield::link::SumLayer>(label, l1, l2);
+  auto net = neuralfield::get_current_network();
+  net += l;
+  return l;
 }
 
 

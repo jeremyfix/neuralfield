@@ -1,5 +1,5 @@
 #include "link_layers.hpp"
-
+#include "network.hpp"
 
 
 void neuralfield::link::Gaussian::init_convolution() {
@@ -132,7 +132,10 @@ std::shared_ptr<neuralfield::function::Layer> neuralfield::link::gaussian(double
 									  bool toric,
 									  std::initializer_list<int> shape,
 									  std::string label) {
-  return std::shared_ptr<neuralfield::link::Gaussian>(new neuralfield::link::Gaussian(label, A, s, toric, shape));
+  auto l = std::shared_ptr<neuralfield::link::Gaussian>(new neuralfield::link::Gaussian(label, A, s, toric, shape));
+  auto net = neuralfield::get_current_network();
+  net += l;
+  return l;
 }
 std::shared_ptr<neuralfield::function::Layer> neuralfield::link::gaussian(double A,
 									  double s,
@@ -163,13 +166,11 @@ neuralfield::link::SumLayer::SumLayer(std::string label,
 }
 
 void neuralfield::link::SumLayer::update(void) {
-  std::cout << "Updating " << label() << std::endl;
   
   auto it_self = begin();
   auto it_prevs = _prevs.begin();
   auto l1 = *(it_prevs++);
   auto l2 = *(it_prevs++);
-  std::cout << "from " << l1->label() << " and " << l2->label() << std::endl;
 
   auto it1 = l1->begin();
   auto it2 = l2->begin();

@@ -1,5 +1,37 @@
 #include "network.hpp"
 
+std::shared_ptr<neuralfield::Network> neuralfield::Network::current_network;
+
+std::shared_ptr<neuralfield::Network> neuralfield::network() {
+  auto net = std::make_shared<neuralfield::Network>();
+  Network::current_network = net;
+  return net;
+}
+
+std::shared_ptr<neuralfield::Network> neuralfield::get_current_network() {
+  if(! neuralfield::Network::current_network)
+    network();
+  return neuralfield::Network::current_network;
+}
+
+std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::input::AbstractLayer> l) {
+  net->_input_layers.push_back(l);
+  net->register_labelled_layer(l); 
+  return net;
+}
+  
+std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::function::Layer> l) {
+  net->_function_layers.push_back(l);
+  net->register_labelled_layer(l);
+  return net;
+}
+std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::buffered::Layer> l) {
+  net->_buffered_layers.push_back(l);
+  net->register_labelled_layer(l);
+  return net;
+}
+
+
 void neuralfield::Network::register_labelled_layer(std::shared_ptr<neuralfield::layer::Layer> layer) {
   if(layer->label() != "") {
     auto it = _labelled_layers.find(layer->label());
@@ -61,21 +93,21 @@ void neuralfield::Network::init() {
 
   _function_layers = reordered_layers;
 
-  for(auto& l: _function_layers)
+  for(auto l: _function_layers)
     l->update();
 }
 
 void neuralfield::Network::step() {
   // The function layers are supposed to be loaded with their updated values
   // we therefore begin by evaluating all the buffered layers
-  for(auto& l: _buffered_layers)
+  for(auto l: _buffered_layers)
     l->update();
   // We expose the new values to the output
-  for(auto& l: _buffered_layers)
+  for(auto l: _buffered_layers)
     l->swap();
 
   // And then diffuse through the function layers
-  for(auto& l: _function_layers)
+  for(auto l: _function_layers)
     l->update();
 }
 
@@ -87,23 +119,18 @@ std::shared_ptr<neuralfield::layer::Layer> neuralfield::Network::get(std::string
   return it->second;    
 }
 
-std::shared_ptr<neuralfield::Network> neuralfield::network() {
-  return std::make_shared<neuralfield::Network>();
-}
+void neuralfield::Network::print(void) {
+  std::cout << std::string(8, '*') << " Network " << std::endl;
+  std::cout << "  " << _input_layers.size() << " input layers" << std::endl;
+  for(auto l: _input_layers)
+    std::cout << "     '" << l->label() << "'" << std::endl;
+  std::cout << "  " << _function_layers.size() << " function layers " << std::endl;
+  for(auto l: _function_layers)
+    std::cout << "     '" << l->label() << "'" << std::endl;
+  std::cout << "  " << _buffered_layers.size() << " buffered layers " << std::endl;
+  for(auto l: _buffered_layers)
+    std::cout << "     '" << l->label() << "'" << std::endl;
 
-std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::input::AbstractLayer> l) {
-  net->_input_layers.push_back(l);
-  net->register_labelled_layer(l); 
-  return net;
-}
+  std::cout << std::string(16, '*') << std::endl;
   
-std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::function::Layer> l) {
-  net->_function_layers.push_back(l);
-  net->register_labelled_layer(l);
-  return net;
-}
-std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::buffered::Layer> l) {
-  net->_buffered_layers.push_back(l);
-  net->register_labelled_layer(l);
-  return net;
 }

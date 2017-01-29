@@ -1,5 +1,5 @@
 #include "buffered_layers.hpp"
-
+#include "network.hpp"
 
 neuralfield::buffered::Layer::Layer(std::string label,
 				    typename parameters_type::size_type number_of_parameters,
@@ -25,6 +25,8 @@ void neuralfield::buffered::Layer::update(void) {
 void neuralfield::buffered::Layer::swap(void) {
   std::swap(_buffer, _values);
 }
+
+
 
 
 neuralfield::buffered::LeakyIntegrator::LeakyIntegrator(std::string label,
@@ -53,7 +55,12 @@ void neuralfield::buffered::LeakyIntegrator::update(void) {
 std::shared_ptr<neuralfield::buffered::LeakyIntegrator> neuralfield::buffered::leaky_integrator(double alpha,
 												std::initializer_list<int> shape,
 												std::string label) {
-  return std::make_shared<neuralfield::buffered::LeakyIntegrator>(neuralfield::buffered::LeakyIntegrator(label, alpha, shape));
+  auto l = std::make_shared<neuralfield::buffered::LeakyIntegrator>(neuralfield::buffered::LeakyIntegrator(label, alpha, shape));
+
+  auto net = neuralfield::get_current_network();
+  net += l;
+
+  return l;
 }
 std::shared_ptr<neuralfield::buffered::LeakyIntegrator> neuralfield::buffered::leaky_integrator(double alpha,
 												int size,

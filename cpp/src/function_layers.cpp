@@ -1,4 +1,5 @@
 #include "function_layers.hpp"
+#include "network.hpp"
 
 neuralfield::function::Layer::Layer(std::string label,
 						 typename parameters_type::size_type number_of_parameters,
@@ -64,11 +65,13 @@ void neuralfield::function::VectorizedFunction::update() {
 std::shared_ptr<neuralfield::function::Layer> neuralfield::function::function(std::string function_name,
 										std::initializer_list<int> shape,
 										std::string label) {
+  std::shared_ptr<neuralfield::function::Layer> l;
+  
   if(function_name == "sigmoid") {
-    return std::make_shared<neuralfield::function::VectorizedFunction>(label, [](double x) -> double { return 1.0 / (1.0 + exp(-x));}, shape);
+    l = std::make_shared<neuralfield::function::VectorizedFunction>(label, [](double x) -> double { return 1.0 / (1.0 + exp(-x));}, shape);
   }
   else if(function_name == "relu") {
-    return std::make_shared<neuralfield::function::VectorizedFunction>(label, [](double x) -> double {
+    l = std::make_shared<neuralfield::function::VectorizedFunction>(label, [](double x) -> double {
 	if(x <= 0.0)
 	  return 0.0;
 	else
@@ -78,6 +81,11 @@ std::shared_ptr<neuralfield::function::Layer> neuralfield::function::function(st
   else {
     throw std::invalid_argument(std::string("Unknown function : ") + function_name);
   }
+
+  auto net = neuralfield::get_current_network();
+  net += l;
+  
+  return l;
 }
 
 std::shared_ptr<neuralfield::function::Layer> neuralfield::function::function(std::string function_name,
