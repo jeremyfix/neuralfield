@@ -17,10 +17,11 @@ SET(PROJECT_DESCRIPTION_SUMMARY "C++ Library for parametrized NeuralFields")
 find_package(PkgConfig)
 
 pkg_check_modules(FFTW fftw3 REQUIRED)
+pkg_check_modules(POPOT popot REQUIRED)
 
-set(PKG_CONFIG_DEPENDS "fftw3")
+set(PKG_CONFIG_DEPENDS "fftw3 popot")
 
-SET(PROJECT_LIBS "${FFTW_LDFLAGS}")
+SET(PROJECT_LIBS "${FFTW_LDFLAGS} ${POPOT_LDFLAGS}")
 SET(PROJECT_CFLAGS -Wall -std=c++11)
 
 ###################################

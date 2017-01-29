@@ -1,6 +1,13 @@
 #include "neuralfield.hpp"
 #include <iostream>
 
+#include "rng_generators.h"
+typedef popot::rng::CRNG RNG_GENERATOR;
+
+#include "popot.h"
+typedef popot::algorithm::ParticleStochasticSPSO::VECTOR_TYPE TVector;
+
+
 using Input = std::vector<double>;
 
 void fillInput(neuralfield::values_iterator begin,
@@ -27,6 +34,10 @@ Input generate_input(std::vector<int> shape,
   return input;
 }
 
+double evaluate(std::shared_ptr<neuralfield::Network> net, double * params) {
+  return 0.0;
+}
+
 int main(int argc, char * argv[]) {
 
   if(argc != 2) {
@@ -35,6 +46,9 @@ int main(int argc, char * argv[]) {
     std::exit(-1);
   }
 
+  RNG_GENERATOR::rng_srand();
+  RNG_GENERATOR::rng_warm_up();
+  
   int N = atoi(argv[1]);
 
   double Ap = 1.5;
@@ -68,6 +82,7 @@ int main(int argc, char * argv[]) {
   net->init();
 
   //// This is how one scenario should goes on
+  net->get("gexc")->set_parameters({1.4, 3.0});
   net->reset();
 
   auto I = generate_input(shape, "random");
@@ -77,5 +92,34 @@ int main(int argc, char * argv[]) {
     net->step();
   ////
   
+
+  // Parametrization of popot
+
+  unsigned int Nparams = 4;
+  std::vector<double> lbounds({0.1, 0.2, 0.3, 0.4});
+  std::vector<double> ubounds({1.0, 2.0, 3.0, 4.0});
+  auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
+  auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
+  
+  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 1000 || fitness <= 0.001;};
+  
+  auto cost_function = [net] (TVector& pos) -> double { 
+    return evaluate(net, pos.getValuesPtr());
+  };
+  
+  auto algo = popot::algorithm::stochastic_montecarlo_spso2006(Nparams, 
+							       lbound, 
+							       ubound, 
+							       stop, 
+							       cost_function, 
+							       10);
+    
+  // We run the algorithm
+  algo->run(1);
+  
+  std::cout << "Best particle :" << algo->getBest() << std::endl;
+
+
+
   return 0;
 }

@@ -9,6 +9,7 @@ file(
 )
 
 
+include_directories(${POPOT_INCLUDE_DIRS})
 
 # loop over the list to compile them
 foreach(f ${usage_examples})
