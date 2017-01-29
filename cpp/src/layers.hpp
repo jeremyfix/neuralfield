@@ -75,7 +75,7 @@ namespace neuralfield {
       std::vector<int> shape() const;
       std::string label();
       
-      void set_parameters(std::initializer_list<double> params);
+      virtual void set_parameters(std::initializer_list<double> params);
       
       values_iterator begin();
       values_iterator end();

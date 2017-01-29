@@ -110,7 +110,12 @@ neuralfield::link::Gaussian::~Gaussian() {
   delete[] kernel;
   delete[] src;
 }
-      
+
+void neuralfield::link::Gaussian::set_parameters(std::initializer_list<double> params) {
+  neuralfield::function::Layer::set_parameters(params);
+  init_convolution();
+}
+
 void neuralfield::link::Gaussian::update() {
   if(_prevs.size() != 1) {
     throw std::runtime_error("The layer named '" + label() + "' should be connected to one layer.");

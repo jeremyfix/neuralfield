@@ -59,7 +59,8 @@ namespace neuralfield {
 	       std::vector<int> shape);
       
       ~Gaussian();
-      
+
+      void set_parameters(std::initializer_list<double> params) override;
       void update() override;  
     };
 
