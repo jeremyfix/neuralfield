@@ -1,4 +1,5 @@
 #include "neuralfield.hpp"
+#include "optimization-scenario.hpp"
 #include <iostream>
 
 #include "rng_generators.h"
@@ -8,7 +9,6 @@ typedef popot::rng::CRNG RNG_GENERATOR;
 typedef popot::algorithm::ParticleStochasticSPSO::VECTOR_TYPE TVector;
 
 
-using Input = std::vector<double>;
 
 void fillInput(neuralfield::values_iterator begin,
 	       neuralfield::values_iterator end,
@@ -16,25 +16,10 @@ void fillInput(neuralfield::values_iterator begin,
   std::copy(x.begin(), x.end(), begin);
 }
 
-Input generate_input(std::vector<int> shape,
-		     std::string label) {
-  int size = 1;
-  for(auto s: shape)
-    size *= s;
-
-  Input input(size);
-  
-  if(label == "random") {
-    for(auto& v: input)
-      v = neuralfield::random::uniform(0.0, 1.0);
-  }
-  else if(label == "structured") {
-    // TODO
-  }
-  return input;
-}
-
-double evaluate(std::shared_ptr<neuralfield::Network> net, double * params) {
+double evaluate(unsigned int nb_steps,
+		std::vector<int> shape,
+		std::shared_ptr<neuralfield::Network> net,
+		double * params) {
 
   // Set the parameters of the field
   // params = [dttau     h,  Ap,   sm, ka, ks]
@@ -55,17 +40,13 @@ double evaluate(std::shared_ptr<neuralfield::Network> net, double * params) {
   net->get("u")->set_parameters({dt_tau});
   
   // Test the net on the different scenarii
-  /*
-  Scenario s = CompetitionScenario("random");
-  double f1 = s.evaluate(net);
-  
-  Scenario s2 = CompetitionScenario("structured");
-  double f2 = s.evaluate(net);
+  auto s1 = CompetitionScenario<CompetitionType::Random>(nb_steps, shape);
+  double f1 = s1.evaluate(net);
 
+  auto s2 = CompetitionScenario<CompetitionType::Structured>(nb_steps, shape);
+  double f2 = s2.evaluate(net);
   
   return f1+f2;
-  */
-  return 0;
 }
 
 int main(int argc, char * argv[]) {
@@ -114,18 +95,6 @@ int main(int argc, char * argv[]) {
 
   net->init();
 
-  //// This is how one scenario should goes on
-  net->get("gexc")->set_parameters({1.4, 3.0});
-  net->reset();
-
-  auto I = generate_input(shape, "random");
-  net->set_input<Input>("input", I);
-  
-  for(unsigned int i = 0 ; i < Nsteps; ++i)
-    net->step();
-  ////
-  
-
   // Parametrization of popot
 
   const unsigned int Nparams = 6;
@@ -137,8 +106,8 @@ int main(int argc, char * argv[]) {
   
   auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 1000 || fitness <= 0.001;};
   
-  auto cost_function = [net] (TVector& pos) -> double { 
-    return evaluate(net, pos.getValuesPtr());
+  auto cost_function = [Nsteps, shape, net] (TVector& pos) -> double { 
+    return evaluate(Nsteps, shape, net, pos.getValuesPtr());
   };
   
   auto algo = popot::algorithm::stochastic_montecarlo_spso2006(Nparams, 
