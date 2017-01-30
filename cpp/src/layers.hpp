@@ -87,6 +87,5 @@ namespace neuralfield {
     };
 
     std::ostream& operator<<(std::ostream& os, const Layer& l);
-
   }
 }

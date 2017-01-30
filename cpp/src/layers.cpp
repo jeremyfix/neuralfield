@@ -81,8 +81,6 @@ std::shared_ptr<neuralfield::function::Layer> neuralfield::layer::operator+(std:
 
 
 
-
-
  
 
 

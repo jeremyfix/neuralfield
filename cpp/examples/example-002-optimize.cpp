@@ -35,7 +35,37 @@ Input generate_input(std::vector<int> shape,
 }
 
 double evaluate(std::shared_ptr<neuralfield::Network> net, double * params) {
-  return 0.0;
+
+  // Set the parameters of the field
+  // params = [dttau     h,  Ap,   sm, ka, ks]
+
+  double dt_tau = params[0];
+  double h = params[1];
+  double Ap = params[2];
+  double sm = params[3];
+  double ka = params[4];
+  double ks = params[5];
+  
+  double Am = ka * Ap;
+  double sp = ks * sm;
+  
+  net->get("gexc")->set_parameters({Ap, sp});
+  net->get("ginh")->set_parameters({Am, sm});
+  net->get("h")->set_parameters({h});
+  net->get("u")->set_parameters({dt_tau});
+  
+  // Test the net on the different scenarii
+  /*
+  Scenario s = CompetitionScenario("random");
+  double f1 = s.evaluate(net);
+  
+  Scenario s2 = CompetitionScenario("structured");
+  double f2 = s.evaluate(net);
+
+  
+  return f1+f2;
+  */
+  return 0;
 }
 
 int main(int argc, char * argv[]) {
@@ -51,11 +81,12 @@ int main(int argc, char * argv[]) {
   
   int N = atoi(argv[1]);
 
+  double dt_tau = 0.01;
+  double baseline = 0.0;
   double Ap = 1.5;
   double sp = 2.;
   double Am = -1.3;
   double sm = 10.;
-  double dt_tau = 0.01;
   bool toric = false;
   unsigned int Nsteps = 100;
   
@@ -66,6 +97,8 @@ int main(int argc, char * argv[]) {
   // std::initializer_list<int> shape({N, N});
   
   auto input = neuralfield::input::input<Input>(shape, fillInput, "input");
+
+  auto h = neuralfield::function::constant(baseline, shape, "h");
   auto u = neuralfield::buffered::leaky_integrator(dt_tau, shape, "u");
   auto g_exc = neuralfield::link::gaussian(Ap, sp, toric, shape,"gexc");
   auto g_inh =  neuralfield::link::gaussian(Am, sm, toric, shape, "ginh");
@@ -74,7 +107,7 @@ int main(int argc, char * argv[]) {
   g_exc->connect(fu);
   g_inh->connect(fu);
   fu->connect(u);
-  u->connect(g_exc + g_inh + input);
+  u->connect(g_exc + g_inh + input + h);
   
   auto net = neuralfield::get_current_network();
   net->print();
@@ -95,9 +128,10 @@ int main(int argc, char * argv[]) {
 
   // Parametrization of popot
 
-  unsigned int Nparams = 4;
-  std::vector<double> lbounds({0.1, 0.2, 0.3, 0.4});
-  std::vector<double> ubounds({1.0, 2.0, 3.0, 4.0});
+  const unsigned int Nparams = 6;
+  //                                  dttau     h,  Ap,   sm, ka, ks 
+  std::array<double, Nparams> lbounds({0.01, -1.0, 0.0,  1.0, 0., 0.});
+  std::array<double, Nparams> ubounds({1.00,  1.0, 1.0,  double(N), 1., 1.});
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   

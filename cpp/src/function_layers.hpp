@@ -75,6 +75,29 @@ namespace neuralfield {
 								int size1,
 								int size2,
 								std::string label="");
+
+
+    class Constant : public neuralfield::function::Layer {
+    public:
+      Constant(std::string label,
+	       std::vector<int> shape);
+      void update() override;
+      void set_parameters(std::initializer_list<double> params) override;
+      
+    };
+
+    std::shared_ptr<neuralfield::function::Layer> constant(double value,
+							   std::initializer_list<int> shape,
+							   std::string label="");
+
+    std::shared_ptr<neuralfield::function::Layer> constant(double value,
+							   int size,
+							   std::string label="");
+
+    std::shared_ptr<neuralfield::function::Layer> constant(double value,
+							   int size1,
+							   int size2,
+							   std::string label="");
     
   }
 }

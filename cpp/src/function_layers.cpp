@@ -2,8 +2,8 @@
 #include "network.hpp"
 
 neuralfield::function::Layer::Layer(std::string label,
-						 typename parameters_type::size_type number_of_parameters,
-						 std::vector<int> shape):
+				    typename parameters_type::size_type number_of_parameters,
+				    std::vector<int> shape):
   neuralfield::layer::Layer(label, number_of_parameters, shape) {
 }
 
@@ -44,8 +44,8 @@ bool neuralfield::function::Layer::can_be_evaluated_from(const std::map<std::sha
      
 
 neuralfield::function::VectorizedFunction::VectorizedFunction(std::string label,
-							   std::function<double(double)> f,
-							   std::vector<int> shape):
+							      std::function<double(double)> f,
+							      std::vector<int> shape):
   neuralfield::function::Layer(label, 0, shape), _f(f) {
 }
 
@@ -63,8 +63,8 @@ void neuralfield::function::VectorizedFunction::update() {
 }
 
 std::shared_ptr<neuralfield::function::Layer> neuralfield::function::function(std::string function_name,
-										std::initializer_list<int> shape,
-										std::string label) {
+									      std::initializer_list<int> shape,
+									      std::string label) {
   std::shared_ptr<neuralfield::function::Layer> l;
   
   if(function_name == "sigmoid") {
@@ -89,14 +89,59 @@ std::shared_ptr<neuralfield::function::Layer> neuralfield::function::function(st
 }
 
 std::shared_ptr<neuralfield::function::Layer> neuralfield::function::function(std::string function_name,
-										int size,
-										std::string label) {
+									      int size,
+									      std::string label) {
   return function(function_name, {size}, label);
 }
 std::shared_ptr<neuralfield::function::Layer> neuralfield::function::function(std::string function_name,
-										int size1,
-										int size2,
-										std::string label) {
+									      int size1,
+									      int size2,
+									      std::string label) {
   return function(function_name, {size1, size2}, label);
 }
 
+
+
+
+
+neuralfield::function::Constant::Constant(std::string label,
+					  std::vector<int> shape):
+  neuralfield::function::Layer(label, 1, shape) {
+
+}
+
+void neuralfield::function::Constant::update() {
+  
+}
+
+void neuralfield::function::Constant::set_parameters(std::initializer_list<double> params) {
+  
+  neuralfield::function::Layer::set_parameters(params);
+  for(auto& v: *this)
+    v = _parameters[0];
+	
+}
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::function::constant(double value,
+						       std::initializer_list<int> shape,
+						       std::string label) {
+  auto l = std::make_shared<neuralfield::function::Constant>(neuralfield::function::Constant(label, shape));
+  l->set_parameters({value});
+  auto net = neuralfield::get_current_network();
+  net += l;
+  return l;
+}
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::function::constant(double value,
+						       int size,
+						       std::string label) {
+  return neuralfield::function::constant(value, {size}, label);
+}
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::function::constant(double value,
+						       int size1,
+						       int size2,
+						       std::string label) {
+  return neuralfield::function::constant(value, {size1, size2}, label);
+}
+    
