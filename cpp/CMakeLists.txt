@@ -6,7 +6,7 @@ project (neuralfield)
 SET(PACKAGE_VERSION "1.00")
 SET(PACKAGE_LICENSE "GPL")
 
-SET(CMAKE_BUILD_TYPE Debug)
+SET(CMAKE_BUILD_TYPE Release)
 
 SET(PROJECT_DESCRIPTION_SUMMARY "C++ Library for parametrized NeuralFields")
 

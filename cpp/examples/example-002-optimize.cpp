@@ -150,26 +150,16 @@ int main(int argc, char * argv[]) {
   net->init();
 
   // Parametrization of popot
-
+  
   const unsigned int Nparams = 6;
 
-  TVector params(Nparams);
-  params[0] = dt_tau;
-  params[1] = baseline;
-  params[2] = Ap;
-  params[3] = sm;
-  params[4] = Am/Ap;
-  params[5] = sp/sm;
-  test(params, net, size, Nsteps);
-  
-
   //                                  dttau     h,  Ap,   sm, ka, ks 
-  std::array<double, Nparams> lbounds({0.01, -1.0, 0.0,  1.0, -1., 0.});
+  std::array<double, Nparams> lbounds({0.01, -1.0, 0.0,  1.0, -1., 0.001});
   std::array<double, Nparams> ubounds({1.00,  1.0, 1.0,  double(N), 0., 1.});
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   
-  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 1000 || fitness <= 0.001;};
+  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 500 || fitness <= 0.001;};
   
   auto cost_function = [Nsteps, shape, net, sigma, dsigma] (TVector& pos) -> double { 
     return evaluate(Nsteps, sigma, dsigma, shape, net, pos.getValuesPtr());
@@ -187,7 +177,7 @@ int main(int argc, char * argv[]) {
   
   std::cout << "Best particle :" << algo->getBest() << std::endl;
 
-  test(params, net, size, Nsteps);
+  test(algo->getBest().getPosition(), net, size, Nsteps);
  
 
   return 0;
