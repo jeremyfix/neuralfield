@@ -15,13 +15,13 @@ int main(int argc, char* argv[]) {
     shape.push_back(std::atoi(argv[2]));
 
 
-  double sigma = 10.0;
-  double dsigma = 5.0;
-  CompetitionScenario<CompetitionType::Random> scenar(100, shape, sigma, dsigma);
+  double sigma = 8.0;
+  double dsigma = 3.0;
+  CompetitionScenario<CompetitionType::Random> scenar(100, shape, sigma, dsigma, false);
 
   std::vector<double> max_pos;
   for(const auto s: shape)
-    max_pos.push_back(s/2.);
+    max_pos.push_back(5.);
   scenar.fill_lower_bound(max_pos);
   scenar.fill_upper_bound(max_pos);
 

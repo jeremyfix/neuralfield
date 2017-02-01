@@ -40,15 +40,61 @@ double evaluate(unsigned int nb_steps,
   net->get("ginh")->set_parameters({Am, sm});
   net->get("h")->set_parameters({h});
   net->get("u")->set_parameters({dt_tau});
+
+  bool toric_fitness = false;
   
   // Test the net on the different scenarii
-  auto s1 = CompetitionScenario<CompetitionType::Random>(nb_steps, shape, sigma, dsigma);
+  auto s1 = CompetitionScenario<CompetitionType::Random>(nb_steps, shape, sigma, dsigma, toric_fitness);
   double f1 = s1.evaluate(net);
 
-  auto s2 = CompetitionScenario<CompetitionType::Structured>(nb_steps, shape, sigma, dsigma);
-  double f2 = s2.evaluate(net);
+  /*
+    auto s2 = CompetitionScenario<CompetitionType::Structured>(nb_steps, shape, sigma, dsigma, toric_fitness);
+    double f2 = s2.evaluate(net);
+    
+    return f1+f2;
+  */
+  return f1;
+}
+
+
+void test(TVector params, std::shared_ptr<neuralfield::Network> net, int size, int Nsteps) {
+
+  double  dt_tau = params[0];
+  double baseline = params[1];
+  double Ap = params[2];
+  double sm = params[3];
+  double ka = params[4];
+  double ks = params[5];
   
-  return f1+f2;
+  double Am = ka * Ap;
+  double sp = ks * sm;
+  
+  net->get("gexc")->set_parameters({Ap, sp});
+  net->get("ginh")->set_parameters({Am, sm});
+  net->get("h")->set_parameters({baseline});
+  net->get("u")->set_parameters({dt_tau});
+  
+  Input input_values(size);
+  for(auto& v: input_values)
+    v = neuralfield::random::uniform(0., 1.);
+
+  net->reset();
+  
+  net->set_input<Input>("input", input_values);
+  
+  for(int i = 0 ; i < Nsteps; ++i)
+    net->step();
+
+  auto input = net->get("input");
+  auto fu = net->get("fu");
+
+  std::ofstream out("res.data");
+  auto it_input = input->begin();
+  auto it_fu = fu->begin();
+  for(int i = 0 ; i < size ; ++i, ++it_input, ++it_fu) {
+    out << i << " " << *it_input << " " << *it_fu << std::endl;
+  }
+  out.close();
 }
 
 int main(int argc, char * argv[]) {
@@ -73,14 +119,17 @@ int main(int argc, char * argv[]) {
   bool toric = false;
   unsigned int Nsteps = 100;
 
-  double sigma = N/2.;
+  double sigma = 5.;
   double dsigma = 2.;
+  int size;
   
   // 1D
   std::initializer_list<int> shape({N});
+  size = N;
   
   // 2D
   // std::initializer_list<int> shape({N, N});
+  // size = N * N;
   
   auto input = neuralfield::input::input<Input>(shape, fillInput, "input");
 
@@ -103,9 +152,20 @@ int main(int argc, char * argv[]) {
   // Parametrization of popot
 
   const unsigned int Nparams = 6;
+
+  TVector params(Nparams);
+  params[0] = dt_tau;
+  params[1] = baseline;
+  params[2] = Ap;
+  params[3] = sm;
+  params[4] = Am/Ap;
+  params[5] = sp/sm;
+  test(params, net, size, Nsteps);
+  
+
   //                                  dttau     h,  Ap,   sm, ka, ks 
-  std::array<double, Nparams> lbounds({0.01, -1.0, 0.0,  1.0, 0., 0.});
-  std::array<double, Nparams> ubounds({1.00,  1.0, 1.0,  double(N), 1., 1.});
+  std::array<double, Nparams> lbounds({0.01, -1.0, 0.0,  1.0, -1., 0.});
+  std::array<double, Nparams> ubounds({1.00,  1.0, 1.0,  double(N), 0., 1.});
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   
@@ -127,7 +187,8 @@ int main(int argc, char * argv[]) {
   
   std::cout << "Best particle :" << algo->getBest() << std::endl;
 
-
+  test(params, net, size, Nsteps);
+ 
 
   return 0;
 }
