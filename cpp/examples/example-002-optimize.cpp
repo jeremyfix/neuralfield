@@ -17,6 +17,8 @@ void fillInput(neuralfield::values_iterator begin,
 }
 
 double evaluate(unsigned int nb_steps,
+		double sigma,
+		double dsigma,
 		std::vector<int> shape,
 		std::shared_ptr<neuralfield::Network> net,
 		double * params) {
@@ -40,10 +42,10 @@ double evaluate(unsigned int nb_steps,
   net->get("u")->set_parameters({dt_tau});
   
   // Test the net on the different scenarii
-  auto s1 = CompetitionScenario<CompetitionType::Random>(nb_steps, shape);
+  auto s1 = CompetitionScenario<CompetitionType::Random>(nb_steps, shape, sigma, dsigma);
   double f1 = s1.evaluate(net);
 
-  auto s2 = CompetitionScenario<CompetitionType::Structured>(nb_steps, shape);
+  auto s2 = CompetitionScenario<CompetitionType::Structured>(nb_steps, shape, sigma, dsigma);
   double f2 = s2.evaluate(net);
   
   return f1+f2;
@@ -70,6 +72,9 @@ int main(int argc, char * argv[]) {
   double sm = 10.;
   bool toric = false;
   unsigned int Nsteps = 100;
+
+  double sigma = N/2.;
+  double dsigma = 2.;
   
   // 1D
   std::initializer_list<int> shape({N});
@@ -106,8 +111,8 @@ int main(int argc, char * argv[]) {
   
   auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 1000 || fitness <= 0.001;};
   
-  auto cost_function = [Nsteps, shape, net] (TVector& pos) -> double { 
-    return evaluate(Nsteps, shape, net, pos.getValuesPtr());
+  auto cost_function = [Nsteps, shape, net, sigma, dsigma] (TVector& pos) -> double { 
+    return evaluate(Nsteps, sigma, dsigma, shape, net, pos.getValuesPtr());
   };
   
   auto algo = popot::algorithm::stochastic_montecarlo_spso2006(Nparams, 
