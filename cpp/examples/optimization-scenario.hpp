@@ -65,20 +65,8 @@ public:
       int k_shape;
       int k_center;
       std::function<double(int, int)> dist;
-      /*      
-	      if(toric) {
-	      k_shape = _shape[0];
-	      k_center = 0;
-	      FFTW_Convolution::init_workspace(ws, FFTW_Convolution::CIRCULAR_SAME, _shape[0], 1, k_shape, 1);
-	  
-	      dist = [k_shape] (int x_src, int x_dst) {
-	      int dx = std::min(abs(x_src-x_dst), k_shape - abs(x_src - x_dst));
-	      return dx;
-	      };
-	  
-	      }
-	      else {
-      */
+
+      // Linear convolution
       k_shape = 2*_shape[0]-1;
       k_center = k_shape/2;
       FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME,  _shape[0], 1, k_shape, 1);
@@ -86,7 +74,6 @@ public:
       dist = [] (int x_src, int x_dst) {
 	return fabs(x_src-x_dst);
       };
-      //}
 
       kernel = new double[k_shape];
       double * kptr = kernel;
@@ -98,9 +85,37 @@ public:
       }
     }
     else if(shape.size() == 2) {
+      std::vector<int> k_shape;
+      std::vector<int> k_center;
+      std::function<double(int, int, int, int)> dist;
+
+      // Linear convolution
+      k_shape.push_back(2*_shape[0]-1);
+      k_shape.push_back(2*_shape[1]-1);
+      k_center.push_back(k_shape[0]/2);
+      k_center.push_back(k_shape[1]/2);
+
+      FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME,  _shape[0], _shape[1], k_shape[0], k_shape[1]);
+	  
+      dist = [] (int x_src, int y_src, int x_dst, int y_dst) {
+	double dx = fabs(x_src-x_dst);
+	double dy = fabs(y_src-y_dst);
+	return sqrt(dx*dx + dy*dy);
+      };
+
+      int k_size = k_shape[0] * k_shape[1];
+      kernel = new double[k_size];
+      double * kptr = kernel;
+      double A = 1.0;
+      double s = _sigma;
+      for(int i = 0 ; i < k_shape[0] ; ++i) 
+	for(int j = 0 ; j < k_shape[1]; ++j, ++kptr) {
+	  double d = dist(i, j, k_center[0], k_center[1]);
+	  *kptr = A * exp(-d*d / (2.0 * s*s));
+	}
     }
   }
-
+  
   ~CompetitionScenario() {
     delete[] src;
     delete[] kernel;
@@ -125,8 +140,24 @@ public:
       return {double(argmax)};
     }
     else if(_shape.size() == 2) {
-      throw std::logic_error("unimplemented");
-      return {0., 0.};
+
+      // We convolve the input
+      std::copy(begin, end, src);
+      FFTW_Convolution::convolve(ws, src, kernel);
+      
+      // And pick up the argmax
+      std::vector<double> argmax = {0., 0.};
+      double dstmax = ws.dst[0];
+      double* dst = ws.dst;
+      for(int i = 0 ; i < _shape[0]; ++i)
+	for(int j = 0 ; j < _shape[1]; ++j, ++dst) {
+	  if(*dst > dstmax) {
+	    argmax[0] = i;
+	    argmax[1] = j;
+	    dstmax = *dst;
+	  }
+	}
+      return argmax;
     }
     else 
       throw std::runtime_error("Cannot compute local argmax in dimensions higher than 2");
@@ -154,6 +185,8 @@ public:
       }
     }
     else if(_shape.size() == 2) {
+      // TODO!!!!
+      
     }
     else
       throw std::runtime_error("Cannot compute lb in dimensions higher than 2");
