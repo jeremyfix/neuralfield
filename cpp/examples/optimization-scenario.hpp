@@ -30,8 +30,6 @@ template<CompetitionType T>
 class CompetitionScenario : public Scenario {
 
 private:
-  std::vector<double> _lb;
-  std::vector<double> _ub;
   double _sigma;
   double _dsigma;
   bool _toric;
@@ -42,6 +40,9 @@ private:
   void generate_input();
   
 public:
+  std::vector<double> _lb;
+  std::vector<double> _ub;
+  
 
   CompetitionScenario(unsigned int nb_steps,
 		      std::vector<int> shape,
@@ -49,11 +50,11 @@ public:
 		      double dsigma,
 		      bool toric) :
     Scenario(nb_steps, shape),
-    _lb(_size),
-    _ub(_size),
     _sigma(sigma),
     _dsigma(dsigma),
-    _toric(toric) {
+    _toric(toric),
+    _lb(_size),
+    _ub(_size) {
     if(shape.size() != 1 && shape.size() != 2)
       throw std::runtime_error("Cannot build competition scenario in dimensions higher than 2");
 
@@ -65,27 +66,27 @@ public:
       int k_center;
       std::function<double(int, int)> dist;
       /*      
-      if(toric) {
-	k_shape = _shape[0];
-	k_center = 0;
-	FFTW_Convolution::init_workspace(ws, FFTW_Convolution::CIRCULAR_SAME, _shape[0], 1, k_shape, 1);
+	      if(toric) {
+	      k_shape = _shape[0];
+	      k_center = 0;
+	      FFTW_Convolution::init_workspace(ws, FFTW_Convolution::CIRCULAR_SAME, _shape[0], 1, k_shape, 1);
 	  
-	dist = [k_shape] (int x_src, int x_dst) {
-	  int dx = std::min(abs(x_src-x_dst), k_shape - abs(x_src - x_dst));
-	  return dx;
-	};
+	      dist = [k_shape] (int x_src, int x_dst) {
+	      int dx = std::min(abs(x_src-x_dst), k_shape - abs(x_src - x_dst));
+	      return dx;
+	      };
 	  
-      }
-      else {
+	      }
+	      else {
       */
-	k_shape = 2*_shape[0]-1;
-	k_center = k_shape/2;
-	FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME,  _shape[0], 1, k_shape, 1);
+      k_shape = 2*_shape[0]-1;
+      k_center = k_shape/2;
+      FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME,  _shape[0], 1, k_shape, 1);
 	  
-	dist = [] (int x_src, int x_dst) {
-	  return fabs(x_src-x_dst);
-	};
-	//}
+      dist = [] (int x_src, int x_dst) {
+	return fabs(x_src-x_dst);
+      };
+      //}
 
       kernel = new double[k_shape];
       double * kptr = kernel;
@@ -104,11 +105,12 @@ public:
     delete[] src;
     delete[] kernel;
   }
-  
-  std::vector<double> local_argmax(void) {
+
+  template<typename ITER>
+  std::vector<double> local_argmax(ITER begin, ITER end) {
     if(_shape.size() == 1) {
       // We convolve the input
-      std::copy(_input.begin(), _input.end(), src);
+      std::copy(begin, end, src);
       FFTW_Convolution::convolve(ws, src, kernel);
       
       // And pick up the argmax
@@ -198,7 +200,15 @@ public:
 
     out.close();  
   }
-    
+
+  void compute_bounds() {
+    auto max_pos = local_argmax(_input.begin(), _input.end());
+
+    // Then we build up the templates
+    fill_lower_bound(max_pos);
+    fill_upper_bound(max_pos);
+  }
+  
   double evaluate(std::shared_ptr<neuralfield::Network> net) override {
     // For a competition scenario, there must be a single bump
     // its location depends on the argmax of a convoluted input
@@ -212,12 +222,10 @@ public:
       net->step();
     auto fu = net->get("fu");
     
-    // We now evaluate the fitness
-    auto max_pos = local_argmax();
-
-    // Then we build up the templates
-    fill_lower_bound(max_pos);
-    fill_upper_bound(max_pos);
+    //// We now evaluate the fitness
+    
+    // We build up the templates
+    compute_bounds();
 
     
     std::vector<double>::iterator it_lb, it_ub;

@@ -57,8 +57,16 @@ double evaluate(unsigned int nb_steps,
 }
 
 
-void test(TVector params, std::shared_ptr<neuralfield::Network> net, int size, int Nsteps) {
+void test(unsigned int nb_steps,
+	  double sigma,
+	  double dsigma,
+	  std::vector<int> shape,
+	  std::shared_ptr<neuralfield::Network> net,
+	  double * params) {
 
+
+  std::cout << "Testing" << std::endl;
+  
   double  dt_tau = params[0];
   double baseline = params[1];
   double Ap = params[2];
@@ -73,28 +81,39 @@ void test(TVector params, std::shared_ptr<neuralfield::Network> net, int size, i
   net->get("ginh")->set_parameters({Am, sm});
   net->get("h")->set_parameters({baseline});
   net->get("u")->set_parameters({dt_tau});
-  
-  Input input_values(size);
-  for(auto& v: input_values)
-    v = neuralfield::random::uniform(0., 1.);
 
-  net->reset();
+  int size = 1;
+  for(auto s: shape)
+    size *= s;
   
-  net->set_input<Input>("input", input_values);
-  
-  for(int i = 0 ; i < Nsteps; ++i)
-    net->step();
+  bool toric_fitness = false;
+  auto s1 = CompetitionScenario<CompetitionType::Random>(nb_steps, shape, sigma, dsigma, toric_fitness);
 
+  std::cout << "Fitnesses " << std::endl;
+  for(unsigned int i = 0 ; i < 10 ; ++i) {
+    auto f1 = s1.evaluate(net);
+    std::cout << f1 << " ";
+  }
+  std::cout << std::endl;
+
+  // Export the input/output and templates of the last run
   auto input = net->get("input");
   auto fu = net->get("fu");
-
+   
   std::ofstream out("res.data");
   auto it_input = input->begin();
   auto it_fu = fu->begin();
-  for(int i = 0 ; i < size ; ++i, ++it_input, ++it_fu) {
-    out << i << " " << *it_input << " " << *it_fu << std::endl;
-  }
+  auto it_lb = s1._lb.begin();
+  auto it_ub = s1._ub.begin();
+  for(int i = 0 ; i < size ; ++i, ++it_input, ++it_fu, ++it_lb, ++it_ub)
+    out << i << " " << *it_input << " " << *it_fu << " " << *it_lb << " " << *it_ub << std::endl;
+
   out.close();
+
+  std::cout << "The input, fu and bounds are dumped in res.data"  << std::endl;
+  std::cout << "You can use gnuplot e.g. to plot them  :" << std::endl;
+  std::cout << "     plot \"res.data\" u 1:2 w l, \"res.data\" u 1:3 w l, \"res.data\" u 1:4 w l, \"res.data\" u 1:5 w l" << std::endl;
+    
 }
 
 int main(int argc, char * argv[]) {
@@ -119,13 +138,11 @@ int main(int argc, char * argv[]) {
   bool toric = false;
   unsigned int Nsteps = 100;
 
-  double sigma = 5.;
-  double dsigma = 2.;
-  int size;
+  double sigma = 3.;
+  double dsigma = 1.;
   
   // 1D
   std::initializer_list<int> shape({N});
-  size = N;
   
   // 2D
   // std::initializer_list<int> shape({N, N});
@@ -154,12 +171,12 @@ int main(int argc, char * argv[]) {
   const unsigned int Nparams = 6;
 
   //                                  dttau     h,  Ap,   sm, ka, ks 
-  std::array<double, Nparams> lbounds({0.01, -1.0, 0.0,  1.0, -1., 0.001});
-  std::array<double, Nparams> ubounds({1.00,  1.0, 1.0,  double(N), 0., 1.});
+  std::array<double, Nparams> lbounds({0.01, -5.0, 0.0,  1.0, -1., 0.001});
+  std::array<double, Nparams> ubounds({1.00,  5.0, 2.0,  5*double(N), 0., 1.});
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   
-  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 500 || fitness <= 0.001;};
+  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 500 || fitness <= 0.00001;};
   
   auto cost_function = [Nsteps, shape, net, sigma, dsigma] (TVector& pos) -> double { 
     return evaluate(Nsteps, sigma, dsigma, shape, net, pos.getValuesPtr());
@@ -177,7 +194,17 @@ int main(int argc, char * argv[]) {
   
   std::cout << "Best particle :" << algo->getBest() << std::endl;
 
-  test(algo->getBest().getPosition(), net, size, Nsteps);
+  auto best_params = algo->getBest().getPosition().getValuesPtr();
+  test(Nsteps, sigma, dsigma, shape, net, best_params);
+
+  std::cout << "Parameters : " << std::endl;
+  std::cout << "  dt_tau : " << best_params[0] << std::endl;
+  std::cout << "  h      : " << best_params[1] << std::endl;
+  std::cout << "  Ap     : " << best_params[2] << std::endl;
+  std::cout << "  sp     : " << best_params[3]*best_params[5] << std::endl;
+  std::cout << "  Am     : " << best_params[2]*best_params[4] << std::endl;
+  std::cout << "  sm     : " << best_params[3] << std::endl;
+
  
 
   return 0;
