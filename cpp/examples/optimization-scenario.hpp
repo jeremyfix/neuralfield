@@ -176,7 +176,7 @@ public:
 	  d = std::min(fabs(cx - i), N - fabs(cx - i));
 	else
 	  d = fabs(cx-i);
-	v = std::cos(M_PI/4.0 * d / s);
+
 	if(d >= 2*s)
 	  v = 0;
 	else
@@ -185,7 +185,32 @@ public:
       }
     }
     else if(_shape.size() == 2) {
-      // TODO!!!!
+      double s = _sigma - _dsigma;
+      auto it_lb = _lb.begin();
+
+      std::function<double(int, int)> dist;
+      if(_toric)
+	dist = [this, max_pos] (int x_src, int y_src) {
+	  double dx = std::min(fabs(max_pos[0] - x_src), this->_shape[0] - fabs(max_pos[0] - x_src));
+	  double dy = std::min(fabs(max_pos[1] - y_src), this->_shape[1] - fabs(max_pos[1] - y_src));
+	  return dx + dy;
+	};
+      else
+	dist = [max_pos] (int x_src, int y_src) {
+	  return fabs(max_pos[0] - x_src) + fabs(max_pos[1] - y_src);
+	};
+
+      double d;
+      for(int i = 0 ; i < _shape[0] ; ++i) {
+	for(int j = 0 ; j < _shape[1]; ++j, ++it_lb) {
+	  d = dist(i, j);
+
+	  if(d >= 2*s)
+	    *it_lb = 0;
+	  else
+	    *it_lb = std::cos(M_PI/4.0 * d / s);
+	}
+      }
       
     }
     else
@@ -216,22 +241,64 @@ public:
       }
     }
     else if(_shape.size() == 2) {
+      double s = _sigma + _dsigma;
+      auto g = [s](double d) {
+	return exp(-d*d/(2.0 * s * s));
+      };
+      
+      std::function<double(int, int)> dist;
+      if(_toric)
+	dist = [this, max_pos] (int x_src, int y_src) {
+	  double dx = std::min(fabs(max_pos[0] - x_src), this->_shape[0] - fabs(max_pos[0] - x_src));
+	  double dy = std::min(fabs(max_pos[1] - y_src), this->_shape[1] - fabs(max_pos[1] - y_src));
+	  return dx + dy;
+	};
+      else
+	dist = [max_pos] (int x_src, int y_src) {
+	  return fabs(max_pos[0] - x_src) + fabs(max_pos[1] - y_src);
+	};
+      
+      double d;
+      auto it_ub = _ub.begin();
+      for(int i = 0 ; i < _shape[0] ; ++i) {
+	for(int j = 0 ; j < _shape[1]; ++j, ++it_ub) {
+	  d = dist(i, j);
+	  *it_ub = f(g(d));
+	}
+      }
+      
     }
     else
       throw std::runtime_error("Cannot compute ub in dimensions higher than 2");
   }
 
   void dump_bounds() {
-    std::ofstream out;
-    out.open("bounds.data");
 
     auto it_lb = _lb.begin();
     auto it_ub = _ub.begin();
-    
-    for(int i = 0 ; i < _size; ++i, ++it_lb, ++it_ub) 
-      out << i << " " << *it_lb << " " << *it_ub << std::endl;
 
-    out.close();  
+    if(_shape.size() == 1) {
+      std::ofstream out;
+      out.open("bounds.data");
+      for(int i = 0 ; i < _size; ++i, ++it_lb, ++it_ub) 
+	out << i << " " << *it_lb << " " << *it_ub << std::endl;
+      out.close();
+    }
+    else if(_shape.size() == 2) {
+      std::ofstream out_lb, out_ub;
+      out_lb.open("lb_bound.data");
+      out_ub.open("ub_bound.data");
+      for(int i = 0 ; i < _shape[0] ; ++i) {
+	for(int j = 0 ; j < _shape[1]; ++j, ++it_lb, ++it_ub) {
+	  out_lb << *it_lb << std::endl;
+	  out_ub << *it_ub << std::endl;
+	}
+	out_lb << std::endl;
+	out_ub << std::endl;
+      }
+      out_lb.close();
+      out_ub.close();
+    }
   }
 
   void compute_bounds() {

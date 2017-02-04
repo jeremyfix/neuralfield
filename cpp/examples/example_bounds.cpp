@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 
   double sigma = 8.0;
   double dsigma = 3.0;
-  CompetitionScenario<CompetitionType::Random> scenar(100, shape, sigma, dsigma, false);
+  CompetitionScenario<CompetitionType::Random> scenar(100, shape, sigma, dsigma, true);
 
   std::vector<double> max_pos;
   for(const auto s: shape)
