@@ -154,8 +154,8 @@ int main(int argc, char * argv[]) {
   bool toric = false;
   unsigned int Nsteps = 100;
 
-  double sigma = 2.;
-  double dsigma = .5;
+  double sigma = 3.;
+  double dsigma = 1.;
 
   std::vector<int> shape;
 
