@@ -15,8 +15,8 @@ int main(int argc, char* argv[]) {
     shape.push_back(std::atoi(argv[2]));
 
 
-  double sigma = 8.0;
-  double dsigma = 3.0;
+  double sigma = 2.0;
+  double dsigma = 0.5;
   CompetitionScenario<CompetitionType::Random> scenar(100, shape, sigma, dsigma, true);
 
   std::vector<double> max_pos;

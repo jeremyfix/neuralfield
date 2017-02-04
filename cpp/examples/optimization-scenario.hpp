@@ -193,11 +193,13 @@ public:
 	dist = [this, max_pos] (int x_src, int y_src) {
 	  double dx = std::min(fabs(max_pos[0] - x_src), this->_shape[0] - fabs(max_pos[0] - x_src));
 	  double dy = std::min(fabs(max_pos[1] - y_src), this->_shape[1] - fabs(max_pos[1] - y_src));
-	  return dx + dy;
+	  return sqrt(dx*dx + dy*dy);
 	};
       else
 	dist = [max_pos] (int x_src, int y_src) {
-	  return fabs(max_pos[0] - x_src) + fabs(max_pos[1] - y_src);
+	  double dx = fabs(max_pos[0] - x_src);
+	  double dy = fabs(max_pos[1] - y_src);
+	  return sqrt(dx*dx+dy*dy);
 	};
 
       double d;
@@ -251,11 +253,13 @@ public:
 	dist = [this, max_pos] (int x_src, int y_src) {
 	  double dx = std::min(fabs(max_pos[0] - x_src), this->_shape[0] - fabs(max_pos[0] - x_src));
 	  double dy = std::min(fabs(max_pos[1] - y_src), this->_shape[1] - fabs(max_pos[1] - y_src));
-	  return dx + dy;
+	  return sqrt(dx*dx + dy*dy);
 	};
       else
 	dist = [max_pos] (int x_src, int y_src) {
-	  return fabs(max_pos[0] - x_src) + fabs(max_pos[1] - y_src);
+	  double dx = fabs(max_pos[0] - x_src);
+	  double dy = fabs(max_pos[1] - y_src);
+	  return sqrt(dx*dx+dy*dy);
 	};
       
       double d;
@@ -278,11 +282,15 @@ public:
     auto it_ub = _ub.begin();
 
     if(_shape.size() == 1) {
-      std::ofstream out;
-      out.open("bounds.data");
-      for(int i = 0 ; i < _size; ++i, ++it_lb, ++it_ub) 
-	out << i << " " << *it_lb << " " << *it_ub << std::endl;
-      out.close();
+      std::ofstream out_lb, out_ub;
+      out_lb.open("lb_bound.data");
+      out_ub.open("ub_bound.data");
+      for(int i = 0 ; i < _shape[0]; ++i, ++it_lb, ++it_ub) {
+	out_lb << *it_lb << std::endl;
+	out_ub << *it_ub << std::endl;
+      }
+      out_lb.close();
+      out_ub.close();
     }
     else if(_shape.size() == 2) {
       std::ofstream out_lb, out_ub;
@@ -299,6 +307,8 @@ public:
       out_lb.close();
       out_ub.close();
     }
+
+    std::cout << "Bounds saved in lb_bound.data, ub_bound.data" << std::endl;
   }
 
   void compute_bounds() {

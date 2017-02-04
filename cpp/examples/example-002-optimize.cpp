@@ -100,35 +100,51 @@ void test(unsigned int nb_steps,
   auto input = net->get("input");
   auto fu = net->get("fu");
    
-  std::ofstream out("res.data");
+  std::ofstream out_input, out_fu;
+  out_input.open("input.data");
+  out_fu.open("fu.data");
+  
   auto it_input = input->begin();
   auto it_fu = fu->begin();
-  auto it_lb = s1._lb.begin();
-  auto it_ub = s1._ub.begin();
-  for(int i = 0 ; i < size ; ++i, ++it_input, ++it_fu, ++it_lb, ++it_ub)
-    out << i << " " << *it_input << " " << *it_fu << " " << *it_lb << " " << *it_ub << std::endl;
 
-  out.close();
+  if(shape.size() == 1) {
+    for(int i = 0 ; i < shape[0] ; ++i, ++it_input, ++it_fu) {
+      out_input << *it_input << std::endl;
+      out_fu << *it_fu << std::endl;
+    }
+  }
+  else if(shape.size() == 2) {
+    for(int i = 0 ; i < shape[0] ; ++i) {
+      for(int j = 0 ; j < shape[1]; ++j, ++it_input, ++it_fu) {
+	out_input << *it_input << std::endl;
+	out_fu << *it_fu << std::endl;
+      }
+      out_input << std::endl;
+      out_fu << std::endl;
+    }
+  }
 
-  std::cout << "The input, fu and bounds are dumped in res.data"  << std::endl;
+  out_fu.close();
+  out_input.close();
+  s1.dump_bounds();
+  
+  std::cout << "The input, fu are dumped in input.data and fu.data"  << std::endl;
   std::cout << "You can use gnuplot e.g. to plot them  :" << std::endl;
-  std::cout << "     plot \"res.data\" u 1:2 w l, \"res.data\" u 1:3 w l, \"res.data\" u 1:4 w l, \"res.data\" u 1:5 w l" << std::endl;
+  std::cout << "     plot \"input.data\" w l , \"fu.data\" w l " << std::endl;
     
 }
 
 int main(int argc, char * argv[]) {
 
-  if(argc != 2) {
+  if(argc != 2 and argc != 3) {
     std::cerr << "Script to optimize a 2D neural field for a competition scenario" << std::endl;
-    std::cerr << "Usage : " << argv[0] << " N" << std::endl;
+    std::cerr << "Usage : " << argv[0] << " N <M>" << std::endl;
     std::exit(-1);
   }
 
   RNG_GENERATOR::rng_srand();
   RNG_GENERATOR::rng_warm_up();
   
-  int N = atoi(argv[1]);
-
   double dt_tau = 0.01;
   double baseline = 0.0;
   double Ap = 1.5;
@@ -138,15 +154,14 @@ int main(int argc, char * argv[]) {
   bool toric = false;
   unsigned int Nsteps = 100;
 
-  double sigma = 3.;
-  double dsigma = 1.;
-  
-  // 1D
-  std::initializer_list<int> shape({N});
-  
-  // 2D
-  // std::initializer_list<int> shape({N, N});
-  // size = N * N;
+  double sigma = 2.;
+  double dsigma = .5;
+
+  std::vector<int> shape;
+
+  shape.push_back(std::atoi(argv[1]));
+  if(argc == 3)
+    shape.push_back(std::atoi(argv[2]));
   
   auto input = neuralfield::input::input<Input>(shape, fillInput, "input");
 
@@ -172,11 +187,11 @@ int main(int argc, char * argv[]) {
 
   //                                  dttau     h,  Ap,   sm, ka, ks 
   std::array<double, Nparams> lbounds({0.01, -5.0, 0.0,  1.0, -1., 0.001});
-  std::array<double, Nparams> ubounds({1.00,  5.0, 2.0,  5*double(N), 0., 1.});
+  std::array<double, Nparams> ubounds({1.00,  5.0, 2.0,  5*double(shape[0]), 0., 1.});
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   
-  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 500 || fitness <= 0.00001;};
+  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 1000 || fitness <= 0.00001;};
   
   auto cost_function = [Nsteps, shape, net, sigma, dsigma] (TVector& pos) -> double { 
     return evaluate(Nsteps, sigma, dsigma, shape, net, pos.getValuesPtr());
@@ -187,7 +202,7 @@ int main(int argc, char * argv[]) {
 							       ubound, 
 							       stop, 
 							       cost_function, 
-							       10);
+							       1);
     
   // We run the algorithm
   algo->run(1);
