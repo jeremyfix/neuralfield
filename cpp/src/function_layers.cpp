@@ -63,7 +63,7 @@ void neuralfield::function::VectorizedFunction::update() {
 }
 
 std::shared_ptr<neuralfield::function::Layer> neuralfield::function::function(std::string function_name,
-									      std::initializer_list<int> shape,
+									      std::vector<int> shape,
 									      std::string label) {
   std::shared_ptr<neuralfield::function::Layer> l;
   
@@ -114,7 +114,7 @@ void neuralfield::function::Constant::update() {
   
 }
 
-void neuralfield::function::Constant::set_parameters(std::initializer_list<double> params) {
+void neuralfield::function::Constant::set_parameters(std::vector<double> params) {
   
   neuralfield::function::Layer::set_parameters(params);
   for(auto& v: *this)
@@ -123,7 +123,7 @@ void neuralfield::function::Constant::set_parameters(std::initializer_list<doubl
 }
 
 std::shared_ptr<neuralfield::function::Layer> neuralfield::function::constant(double value,
-						       std::initializer_list<int> shape,
+						       std::vector<int> shape,
 						       std::string label) {
   auto l = std::make_shared<neuralfield::function::Constant>(neuralfield::function::Constant(label, shape));
   l->set_parameters({value});

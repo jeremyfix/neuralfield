@@ -82,7 +82,7 @@ namespace neuralfield {
 
 
     template<typename INPUT>
-    std::shared_ptr<AbstractLayer> input(std::initializer_list<int> shape, typename Layer<INPUT>::fill_input_type fill_input, std::string label="") {
+    std::shared_ptr<AbstractLayer> input(std::vector<int> shape, typename Layer<INPUT>::fill_input_type fill_input, std::string label="") {
       auto l = std::make_shared<Layer<INPUT> >(Layer<INPUT>(label, 0, shape, fill_input));
       auto net = neuralfield::get_current_network();
       net += l;

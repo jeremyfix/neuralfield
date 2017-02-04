@@ -53,7 +53,7 @@ void neuralfield::buffered::LeakyIntegrator::update(void) {
 
 
 std::shared_ptr<neuralfield::buffered::LeakyIntegrator> neuralfield::buffered::leaky_integrator(double alpha,
-												std::initializer_list<int> shape,
+												std::vector<int> shape,
 												std::string label) {
   auto l = std::make_shared<neuralfield::buffered::LeakyIntegrator>(neuralfield::buffered::LeakyIntegrator(label, alpha, shape));
 

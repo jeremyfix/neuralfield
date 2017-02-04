@@ -65,7 +65,7 @@ namespace neuralfield {
     };
 
     std::shared_ptr<LeakyIntegrator> leaky_integrator(double alpha,
-						      std::initializer_list<int> shape,
+						      std::vector<int> shape,
 						      std::string label = "");
     
     std::shared_ptr<LeakyIntegrator> leaky_integrator(double alpha,

@@ -32,7 +32,7 @@ std::string neuralfield::layer::Layer::label() {
   return _label;
 }
       
-void neuralfield::layer::Layer::set_parameters(std::initializer_list<double> params) {
+void neuralfield::layer::Layer::set_parameters(std::vector<double> params) {
   assert(params.size() == _parameters.size());
   std::copy(params.begin(), params.end(), _parameters.begin());
 }   

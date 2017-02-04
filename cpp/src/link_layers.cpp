@@ -111,7 +111,7 @@ neuralfield::link::Gaussian::~Gaussian() {
   delete[] src;
 }
 
-void neuralfield::link::Gaussian::set_parameters(std::initializer_list<double> params) {
+void neuralfield::link::Gaussian::set_parameters(std::vector<double> params) {
   neuralfield::function::Layer::set_parameters(params);
   init_convolution();
 }
@@ -134,7 +134,7 @@ void neuralfield::link::Gaussian::update() {
 std::shared_ptr<neuralfield::function::Layer> neuralfield::link::gaussian(double A,
 									  double s,
 									  bool toric,
-									  std::initializer_list<int> shape,
+									  std::vector<int> shape,
 									  std::string label) {
   auto l = std::shared_ptr<neuralfield::link::Gaussian>(new neuralfield::link::Gaussian(label, A, s, toric, shape));
   auto net = neuralfield::get_current_network();

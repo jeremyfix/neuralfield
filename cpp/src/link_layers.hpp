@@ -27,9 +27,8 @@
 
 
 #include <memory>
-#include <vector>
 #include <functional>
-#include <initializer_list>
+#include <vector>
 #include <algorithm>
 
 
@@ -60,7 +59,7 @@ namespace neuralfield {
       
       ~Gaussian();
 
-      void set_parameters(std::initializer_list<double> params) override;
+      void set_parameters(std::vector<double> params) override;
       void update() override;  
     };
 
@@ -69,7 +68,7 @@ namespace neuralfield {
     std::shared_ptr<neuralfield::function::Layer> gaussian(double A,
 							   double s,
 							   bool toric,
-							   std::initializer_list<int> shape,
+							   std::vector<int> shape,
 							   std::string label="");
     
     std::shared_ptr<neuralfield::function::Layer> gaussian(double A,

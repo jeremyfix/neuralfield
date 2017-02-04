@@ -65,7 +65,7 @@ namespace neuralfield {
     };
 
     std::shared_ptr<neuralfield::function::Layer> function(std::string function_name,
-								std::initializer_list<int> shape,
+								std::vector<int> shape,
 								std::string label="");
 
     std::shared_ptr<neuralfield::function::Layer> function(std::string function_name,
@@ -82,12 +82,12 @@ namespace neuralfield {
       Constant(std::string label,
 	       std::vector<int> shape);
       void update() override;
-      void set_parameters(std::initializer_list<double> params) override;
+      void set_parameters(std::vector<double> params) override;
       
     };
 
     std::shared_ptr<neuralfield::function::Layer> constant(double value,
-							   std::initializer_list<int> shape,
+							   std::vector<int> shape,
 							   std::string label="");
 
     std::shared_ptr<neuralfield::function::Layer> constant(double value,
