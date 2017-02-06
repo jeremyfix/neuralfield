@@ -83,15 +83,40 @@ void test(unsigned int nb_steps,
   for(auto s: shape)
     size *= s;
 
-  std::cout << "Scaling factors gexc" << std::endl;
-  for(int i = 0; i < size; ++i)
-    std::cout << std::static_pointer_cast<neuralfield::link::Gaussian>(net->get("gexc"))->_scaling_factors[i] << " ";
-  std::cout << std::endl;
-  std::cout << "Scaling factors ginh" << std::endl;
-  for(int i = 0; i < size; ++i)
-    std::cout << std::static_pointer_cast<neuralfield::link::Gaussian>(net->get("ginh"))->_scaling_factors[i] << " ";
-  std::cout << std::endl;
+  if(shape.size() == 1) {
+    std::cout << "Scaling factors gexc" << std::endl;
+    for(int i = 0; i < size; ++i)
+      std::cout << std::static_pointer_cast<neuralfield::link::Gaussian>(net->get("gexc"))->_scaling_factors[i] << " ";
+    std::cout << std::endl;
+    
+    std::cout << "Scaling factors ginh" << std::endl;
+    for(int i = 0; i < size; ++i)
+      std::cout << std::static_pointer_cast<neuralfield::link::Gaussian>(net->get("ginh"))->_scaling_factors[i] << " ";
+    std::cout << std::endl;
+  }
+  else if(shape.size() == 2) {
+    std::cout << "Scaling factors gexc" << std::endl;
 
+    for(int i = 0; i < shape[1]; ++i) {
+      for(int j = 0 ; j < shape[0]; ++j) {
+	std::cout << std::static_pointer_cast<neuralfield::link::Gaussian>(net->get("gexc"))->_scaling_factors[i*shape[0] + j] << " ";
+      }
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    std::cout << "Scaling factors ginh" << std::endl;
+
+    for(int i = 0; i < shape[1]; ++i) {
+      for(int j = 0 ; j < shape[0]; ++j) {
+	std::cout << std::static_pointer_cast<neuralfield::link::Gaussian>(net->get("ginh"))->_scaling_factors[i*shape[0] + j] << " ";
+      }
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+    
+  }
+  
   
   bool toric_fitness = true;
   auto s1 = RandomCompetition(nb_steps, shape, sigma, dsigma, toric_fitness);
@@ -164,7 +189,7 @@ int main(int argc, char * argv[]) {
   double Am = -1.3;
   double sm = 10.;
   bool toric = false;
-  bool scale = !toric;
+  bool scale = false;
   unsigned int Nsteps = 100;
 
   double sigma = 3.;

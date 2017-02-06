@@ -105,20 +105,27 @@ void neuralfield::link::Gaussian::init_convolution() {
 	*kptr = A * exp(-d*d / (2.0 * s*s));
       }
     }
-
-    /// Scaling of the weights
-    // This is usefull to prevent border effects when the connections are not toric
-    double sum_weights = 0.0;
-    kptr = kernel;
-    for(int i = 0 ; i < k_shape[0]*k_shape[1] ; ++i, ++kptr) 
-      sum_weights += *kptr;
-
-    if(_scale) {
-      std::fill(_scaling_factors, _scaling_factors + _size, 1.);
-    }
-    else
-      std::fill(_scaling_factors, _scaling_factors + _size, 1.);
     
+    /// Scaling of the weights
+    // This might be usefull to prevent border effects when the connections are not toric
+    if(_toric || !_scale) 
+      std::fill(_scaling_factors, _scaling_factors + _size, 1.);
+    else {
+      double max_sum_weights = 0.0;
+
+      for(int i = 0 ; i < _shape[1]; ++i) // do not use kptr, we skip some values..
+	for(int j = 0 ; j < _shape[0] ; ++j)
+	  max_sum_weights += kernel[(i+int((_shape[1]-1.)/2.))*k_shape[0] + (j+int((_shape[0]-1.)/2.))];
+
+      for(int i = 0 ; i < _shape[1]; ++i) // do not use kptr, we skip some values..
+	for(int j = 0 ; j < _shape[0] ; ++j) {
+	  double sum_weights = 0.0;
+	  for(int k = 0 ; k < _shape[1]; ++k) 
+	    for(int l = 0 ; l < _shape[0]; ++l) 
+	      sum_weights += kernel[(k+i) * k_shape[0] + (l+j)];
+	  _scaling_factors[i*_shape[0] + j] = max_sum_weights / sum_weights;
+	}
+    }
     
   }
   else 
@@ -167,12 +174,17 @@ void neuralfield::link::Gaussian::update() {
   std::copy(prev->begin(), prev->end(), src);
   FFTW_Convolution::convolve(ws, src, kernel);
 
-  double* dst_ptr = ws.dst;
-  double* it_s = _scaling_factors;
-  for(auto& v: _values) {
-    v = (*dst_ptr) * (*it_s);
-    ++it_s;
-    ++dst_ptr;
+  if(!_scale) {
+    std::copy(ws.dst, ws.dst + _size, _values.begin());
+  }
+  else {
+    double* dst_ptr = ws.dst;
+    double* it_s = _scaling_factors;
+    for(auto& v: _values) {
+      v = (*dst_ptr) * (*it_s);
+      ++it_s;
+      ++dst_ptr;
+    }
   }
 }      
     
