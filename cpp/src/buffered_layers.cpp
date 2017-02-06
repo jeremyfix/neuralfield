@@ -65,13 +65,13 @@ std::shared_ptr<neuralfield::buffered::LeakyIntegrator> neuralfield::buffered::l
 std::shared_ptr<neuralfield::buffered::LeakyIntegrator> neuralfield::buffered::leaky_integrator(double alpha,
 												int size,
 												std::string label) {
-  return leaky_integrator(alpha, {size}, label);
+  return leaky_integrator(alpha, std::vector<int>({size}), label);
 }
 std::shared_ptr<neuralfield::buffered::LeakyIntegrator> neuralfield::buffered::leaky_integrator(double alpha,
 												int size1,
 												int size2,
 												std::string label) {
-  return leaky_integrator(alpha, {size1, size2}, label);
+  return leaky_integrator(alpha, std::vector<int>({size1, size2}), label);
 }
 
 

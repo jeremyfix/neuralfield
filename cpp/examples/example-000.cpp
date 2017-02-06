@@ -21,14 +21,14 @@ int main(int argc, char* argv[]) {
 
     int N = 10;
     bool toric = true;
+    bool scaling = !toric;
     
     auto net = neuralfield::network();
-
     auto input = neuralfield::input::input<Input>(N, fillInput, "input");
-    auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, N,"gexc");
-    auto g_inh =  neuralfield::link::gaussian(1.3, 10., toric, N, "ginh");
+    auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, scaling, N, "gexc");
+    auto g_inh =  neuralfield::link::gaussian(1.3, 10., toric, scaling, N, "ginh");
     auto fu = neuralfield::function::function("sigmoid", N,"fu");
-
+    
     g_exc->connect(fu);
     //fu->connect(g_exc);
     g_inh->connect(input);
@@ -85,7 +85,8 @@ int main(int argc, char* argv[]) {
     auto input = neuralfield::input::input<Input>(N, fillInput, "input");
 
     bool toric = false;
-    auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, N, "gexc");
+    bool scaling = !toric;
+    auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, scaling, N, "gexc");
 
     auto fu = neuralfield::function::function("sigmoid", N, "fu");
 
@@ -108,12 +109,13 @@ int main(int argc, char* argv[]) {
     
     int N = 30;
     bool toric = false;
+    bool scaling = !toric;
     
     auto net = neuralfield::network();
 
     auto input = neuralfield::input::input<Input>(N, N, fillInput, "input");
-    auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, N, N, "gexc");
-    auto g_inh = neuralfield::link::gaussian(1.4, 20., toric, N, N, "ginh");
+    auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, scaling, N, N, "gexc");
+    auto g_inh = neuralfield::link::gaussian(1.4, 20., toric, scaling, N, N, "ginh");
     auto fu = neuralfield::function::function("sigmoid", N, N, "fu");
     auto u = neuralfield::buffered::leaky_integrator(0.01, N, N, "u");
     
@@ -141,9 +143,10 @@ int main(int argc, char* argv[]) {
     auto input = neuralfield::input::input<Input>(N, fillInput, "input");
 
     bool toric = false;
-    auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, N);
+    bool scaling = !toric;
+    auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, scaling, N);
     
-    auto g_inh =  neuralfield::link::gaussian(1.3, 10., toric, N);
+    auto g_inh =  neuralfield::link::gaussian(1.3, 10., toric, scaling, N);
     
     auto fu = neuralfield::function::function("sigmoid", N);
 
@@ -176,12 +179,13 @@ int main(int argc, char* argv[]) {
     std::cout << "Input : " << *input << std::endl;
 
     bool toric = false;
+    bool scaling = !toric;
 	
     // We can instantiate a parametric functional layer
     // providing the parameters directly
-    auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, N, "gexc");
+    auto g_exc = neuralfield::link::gaussian(1.5, 2., toric, scaling, N, "gexc");
 	
-    auto g_inh =  neuralfield::link::gaussian(1.3, 10., toric, N, "ginh");
+    auto g_inh =  neuralfield::link::gaussian(1.3, 10., toric, scaling, N, "ginh");
 	
     auto fu = neuralfield::function::function("sigmoid", N, "fu");
 	

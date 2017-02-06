@@ -46,15 +46,20 @@ namespace neuralfield {
       bool _toric;
       double * kernel;
       double * src;
+      bool _scale;
+      //double * _scaling_factors;
 
     private:
       void init_convolution();
       
     public:
+      double * _scaling_factors;
+      
       Gaussian(std::string label,
 	       double A,
 	       double s,
 	       bool toric,
+	       bool scale,
 	       std::vector<int> shape);
       
       ~Gaussian();
@@ -68,18 +73,21 @@ namespace neuralfield {
     std::shared_ptr<neuralfield::function::Layer> gaussian(double A,
 							   double s,
 							   bool toric,
+							   bool scale,
 							   std::vector<int> shape,
 							   std::string label="");
     
     std::shared_ptr<neuralfield::function::Layer> gaussian(double A,
 							   double s,
 							   bool toric,
+							   bool scale,
 							   int size,
 							   std::string label="");
     
     std::shared_ptr<neuralfield::function::Layer> gaussian(double A,
 							   double s,
 							   bool toric,
+							   bool scale,
 							   int size1,
 							   int size2,
 							   std::string label= "");

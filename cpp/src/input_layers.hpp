@@ -92,13 +92,13 @@ namespace neuralfield {
     // Utilitary function for building up 1D Layer
     template<typename INPUT>
     std::shared_ptr<AbstractLayer> input(int size, typename Layer<INPUT>::fill_input_type fill_input, std::string label="") {
-      return neuralfield::input::input<INPUT>({size}, fill_input, label);
+      return neuralfield::input::input<INPUT>(std::vector<int>({size}), fill_input, label);
     }
 
     // Utilitary function for building up 2D Layer
     template<typename INPUT>
     std::shared_ptr<AbstractLayer> input(int size1, int size2, typename Layer<INPUT>::fill_input_type fill_input, std::string label="") {
-      return neuralfield::input::input<INPUT>({size1, size2}, fill_input, label);
+      return neuralfield::input::input<INPUT>(std::vector<int>({size1, size2}), fill_input, label);
     }
   }
 }

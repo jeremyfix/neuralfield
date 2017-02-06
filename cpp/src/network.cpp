@@ -3,14 +3,14 @@
 std::shared_ptr<neuralfield::Network> neuralfield::Network::current_network;
 
 std::shared_ptr<neuralfield::Network> neuralfield::network() {
-  auto net = std::make_shared<neuralfield::Network>();
-  Network::current_network = net;
-  return net;
+  neuralfield::Network::current_network = std::make_shared<neuralfield::Network>();
+  return neuralfield::Network::current_network;
 }
 
 std::shared_ptr<neuralfield::Network> neuralfield::get_current_network() {
   if(! neuralfield::Network::current_network)
     network();
+
   return neuralfield::Network::current_network;
 }
 

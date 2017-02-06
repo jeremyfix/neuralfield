@@ -78,12 +78,22 @@ void test(unsigned int nb_steps,
   net->get("ginh")->set_parameters({Am, sm});
   net->get("h")->set_parameters({baseline});
   net->get("u")->set_parameters({dt_tau});
-
+  
   int size = 1;
   for(auto s: shape)
     size *= s;
+
+  std::cout << "Scaling factors gexc" << std::endl;
+  for(int i = 0; i < size; ++i)
+    std::cout << std::static_pointer_cast<neuralfield::link::Gaussian>(net->get("gexc"))->_scaling_factors[i] << " ";
+  std::cout << std::endl;
+  std::cout << "Scaling factors ginh" << std::endl;
+  for(int i = 0; i < size; ++i)
+    std::cout << std::static_pointer_cast<neuralfield::link::Gaussian>(net->get("ginh"))->_scaling_factors[i] << " ";
+  std::cout << std::endl;
+
   
-  bool toric_fitness = false;
+  bool toric_fitness = true;
   auto s1 = RandomCompetition(nb_steps, shape, sigma, dsigma, toric_fitness);
 
   std::cout << "Fitnesses " << std::endl;
@@ -154,6 +164,7 @@ int main(int argc, char * argv[]) {
   double Am = -1.3;
   double sm = 10.;
   bool toric = false;
+  bool scale = !toric;
   unsigned int Nsteps = 100;
 
   double sigma = 3.;
@@ -169,8 +180,8 @@ int main(int argc, char * argv[]) {
 
   auto h = neuralfield::function::constant(baseline, shape, "h");
   auto u = neuralfield::buffered::leaky_integrator(dt_tau, shape, "u");
-  auto g_exc = neuralfield::link::gaussian(Ap, sp, toric, shape,"gexc");
-  auto g_inh =  neuralfield::link::gaussian(Am, sm, toric, shape, "ginh");
+  auto g_exc = neuralfield::link::gaussian(Ap, sp, toric, scale, shape,"gexc");
+  auto g_inh =  neuralfield::link::gaussian(Am, sm, toric, scale, shape, "ginh");
   auto fu = neuralfield::function::function("sigmoid", shape, "fu");
 
   g_exc->connect(fu);
@@ -188,12 +199,12 @@ int main(int argc, char * argv[]) {
   const unsigned int Nparams = 6;
 
   //                                  dttau     h,  Ap,   sm, ka, ks 
-  std::array<double, Nparams> lbounds({0.01, -5.0, 0.0,  1.0, -1., 0.001});
-  std::array<double, Nparams> ubounds({1.00,  5.0, 2.0,  5*double(shape[0]), 0., 1.});
+  std::array<double, Nparams> lbounds({0.01, -5.0, 0.01,  1.0, -1., 0.001});
+  std::array<double, Nparams> ubounds({1.00,  5.0, 2.0,  5*double(shape[0]), -0.01, 1.});
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   
-  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 1000 || fitness <= 0.00001;};
+  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 300 || fitness <= 1e-5;};
   
   auto cost_function = [Nsteps, shape, net, sigma, dsigma] (TVector& pos) -> double { 
     return evaluate(Nsteps, sigma, dsigma, shape, net, pos.getValuesPtr());

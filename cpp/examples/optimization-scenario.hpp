@@ -387,7 +387,7 @@ public:
 
 
   void add_gaussian_input(std::vector<double> center, double A, double sigma) {
-    assert(shape.size() == center.size());
+    assert(_shape.size() == center.size());
     if(_shape.size() == 1) {
 
       std::function<double(int)> dist;

@@ -11,7 +11,7 @@ void neuralfield::link::Gaussian::init_convolution() {
     int k_shape;
     int k_center;
     std::function<double(int, int)> dist;
-	  
+
     if(_toric) {
       k_shape = _shape[0];
       k_center = 0;
@@ -21,7 +21,6 @@ void neuralfield::link::Gaussian::init_convolution() {
 	int dx = std::min(abs(x_src-x_dst), k_shape - abs(x_src - x_dst));
 	return dx;
       };
-	  
     }
     else {
       k_shape = 2*_shape[0]-1;
@@ -41,6 +40,28 @@ void neuralfield::link::Gaussian::init_convolution() {
       double d = dist(i, k_center);
       *kptr = A * exp(-d*d / (2.0 * s*s));
     }
+
+    /// Scaling of the weights
+    // This is usefull to prevent border effects when the connections are not toric
+    if(_toric || !_scale) 
+      std::fill(_scaling_factors, _scaling_factors + _size, 1.);
+    else {
+      double max_sum_weights = 0.0;
+      kptr = kernel + int((_shape[0]-1.)/2.);
+      for(int i = 0 ; i < _shape[0] ; ++i, ++kptr)
+	max_sum_weights += *kptr;
+
+      for(int i = 0 ; i < _shape[0]; ++i) {
+	double sum_weights = 0.0;
+	kptr = kernel + i;
+	for(int j = 0 ; j < _shape[0]; ++j, ++kptr)
+	  sum_weights += *kptr;
+        
+	_scaling_factors[i] = max_sum_weights / sum_weights;	
+      }
+    }
+
+
   }
   else if(_shape.size() == 2) {
     std::vector<int> k_shape(2);
@@ -84,6 +105,21 @@ void neuralfield::link::Gaussian::init_convolution() {
 	*kptr = A * exp(-d*d / (2.0 * s*s));
       }
     }
+
+    /// Scaling of the weights
+    // This is usefull to prevent border effects when the connections are not toric
+    double sum_weights = 0.0;
+    kptr = kernel;
+    for(int i = 0 ; i < k_shape[0]*k_shape[1] ; ++i, ++kptr) 
+      sum_weights += *kptr;
+
+    if(_scale) {
+      std::fill(_scaling_factors, _scaling_factors + _size, 1.);
+    }
+    else
+      std::fill(_scaling_factors, _scaling_factors + _size, 1.);
+    
+    
   }
   else 
     throw std::runtime_error("I cannot handle convolution layers in dimension > 2");
@@ -93,12 +129,15 @@ neuralfield::link::Gaussian::Gaussian(std::string label,
 				      double A,
 				      double s,
 				      bool toric,
+				      bool scale,
 				      std::vector<int> shape):
   neuralfield::function::Layer(label, 2, shape),
   _toric(toric),
-  kernel(0)
+  kernel(0),
+  _scale(scale)
 {
   src = new double[_size];
+  _scaling_factors = new double[_size];
   _parameters[0] = A;
   _parameters[1] = s;
   init_convolution();
@@ -109,6 +148,7 @@ neuralfield::link::Gaussian::~Gaussian() {
   FFTW_Convolution::clear_workspace(ws);
   delete[] kernel;
   delete[] src;
+  delete[] _scaling_factors;
 }
 
 void neuralfield::link::Gaussian::set_parameters(std::vector<double> params) {
@@ -126,7 +166,14 @@ void neuralfield::link::Gaussian::update() {
 	
   std::copy(prev->begin(), prev->end(), src);
   FFTW_Convolution::convolve(ws, src, kernel);
-  std::copy(ws.dst, ws.dst + _size, _values.begin());
+
+  double* dst_ptr = ws.dst;
+  double* it_s = _scaling_factors;
+  for(auto& v: _values) {
+    v = (*dst_ptr) * (*it_s);
+    ++it_s;
+    ++dst_ptr;
+  }
 }      
     
 
@@ -134,9 +181,10 @@ void neuralfield::link::Gaussian::update() {
 std::shared_ptr<neuralfield::function::Layer> neuralfield::link::gaussian(double A,
 									  double s,
 									  bool toric,
+									  bool scale,
 									  std::vector<int> shape,
 									  std::string label) {
-  auto l = std::shared_ptr<neuralfield::link::Gaussian>(new neuralfield::link::Gaussian(label, A, s, toric, shape));
+  auto l = std::shared_ptr<neuralfield::link::Gaussian>(new neuralfield::link::Gaussian(label, A, s, toric, scale, shape));
   auto net = neuralfield::get_current_network();
   net += l;
   return l;
@@ -144,17 +192,19 @@ std::shared_ptr<neuralfield::function::Layer> neuralfield::link::gaussian(double
 std::shared_ptr<neuralfield::function::Layer> neuralfield::link::gaussian(double A,
 									  double s,
 									  bool toric,
+									  bool scale,
 									  int size,
 									  std::string label) {
-  return neuralfield::link::gaussian(A, s, toric, {size}, label);
+  return neuralfield::link::gaussian(A, s, toric, scale, std::vector<int>({size}), label);
 }
 std::shared_ptr<neuralfield::function::Layer> neuralfield::link::gaussian(double A,
-									       double s,
-									       bool toric,
-									       int size1,
-									       int size2,
-									       std::string label) {
-  return neuralfield::link::gaussian(A, s, toric, {size1, size2}, label);
+									  double s,
+									  bool toric,
+									  bool scale,
+									  int size1,
+									  int size2,
+									  std::string label) {
+  return neuralfield::link::gaussian(A, s, toric, scale, std::vector<int>({size1, size2}), label);
 }   
 
 

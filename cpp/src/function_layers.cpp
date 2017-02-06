@@ -91,13 +91,13 @@ std::shared_ptr<neuralfield::function::Layer> neuralfield::function::function(st
 std::shared_ptr<neuralfield::function::Layer> neuralfield::function::function(std::string function_name,
 									      int size,
 									      std::string label) {
-  return function(function_name, {size}, label);
+  return function(function_name, std::vector<int>({size}), label);
 }
 std::shared_ptr<neuralfield::function::Layer> neuralfield::function::function(std::string function_name,
 									      int size1,
 									      int size2,
 									      std::string label) {
-  return function(function_name, {size1, size2}, label);
+  return function(function_name, std::vector<int>({size1, size2}), label);
 }
 
 
@@ -135,13 +135,13 @@ std::shared_ptr<neuralfield::function::Layer> neuralfield::function::constant(do
 std::shared_ptr<neuralfield::function::Layer> neuralfield::function::constant(double value,
 						       int size,
 						       std::string label) {
-  return neuralfield::function::constant(value, {size}, label);
+  return neuralfield::function::constant(value, std::vector<int>({size}), label);
 }
 
 std::shared_ptr<neuralfield::function::Layer> neuralfield::function::constant(double value,
 						       int size1,
 						       int size2,
 						       std::string label) {
-  return neuralfield::function::constant(value, {size1, size2}, label);
+  return neuralfield::function::constant(value, std::vector<int>({size1, size2}), label);
 }
     
