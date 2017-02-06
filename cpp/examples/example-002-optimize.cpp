@@ -44,16 +44,13 @@ double evaluate(unsigned int nb_steps,
   bool toric_fitness = false;
   
   // Test the net on the different scenarii
-  auto s1 = CompetitionScenario<CompetitionType::Random>(nb_steps, shape, sigma, dsigma, toric_fitness);
+  auto s1 = RandomCompetition(nb_steps, shape, sigma, dsigma, toric_fitness);
   double f1 = s1.evaluate(net);
 
-  /*
-    auto s2 = CompetitionScenario<CompetitionType::Structured>(nb_steps, shape, sigma, dsigma, toric_fitness);
-    double f2 = s2.evaluate(net);
-    
-    return f1+f2;
-  */
-  return f1;
+  auto s2 = StructuredCompetition(nb_steps, shape, sigma, dsigma, toric_fitness, 5, shape[0]/5.);
+  double f2 = s2.evaluate(net);
+  
+  return f1 + f2;
 }
 
 
@@ -87,7 +84,7 @@ void test(unsigned int nb_steps,
     size *= s;
   
   bool toric_fitness = false;
-  auto s1 = CompetitionScenario<CompetitionType::Random>(nb_steps, shape, sigma, dsigma, toric_fitness);
+  auto s1 = RandomCompetition(nb_steps, shape, sigma, dsigma, toric_fitness);
 
   std::cout << "Fitnesses " << std::endl;
   for(unsigned int i = 0 ; i < 10 ; ++i) {
@@ -126,11 +123,16 @@ void test(unsigned int nb_steps,
 
   out_fu.close();
   out_input.close();
-  s1.dump_bounds();
   
+  s1.dump_bounds();
   std::cout << "The input, fu are dumped in input.data and fu.data"  << std::endl;
   std::cout << "You can use gnuplot e.g. to plot them  :" << std::endl;
-  std::cout << "     plot \"input.data\" w l , \"fu.data\" w l " << std::endl;
+  if(shape.size() == 1) {
+  std::cout << "     plot \"input.data\" w l , \"fu.data\" w l, \"lb_bound.data\" w l, \"ub_bound.data\" w l " << std::endl;
+  }
+  else if(shape.size() == 2) {
+  std::cout << "     splot \"input.data\" w l , \"fu.data\" w l, \"lb_bound.data\" w l, \"ub_bound.data\" w l " << std::endl;
+  }
     
 }
 

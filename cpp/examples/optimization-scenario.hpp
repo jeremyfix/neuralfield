@@ -24,12 +24,9 @@ public:
 };
 
 
-enum class CompetitionType {Random, Structured};
-
-template<CompetitionType T>
 class CompetitionScenario : public Scenario {
 
-private:
+protected:
   double _sigma;
   double _dsigma;
   bool _toric;
@@ -37,7 +34,8 @@ private:
   double *src;
   FFTW_Convolution::Workspace ws;
   
-  void generate_input();
+protected:
+  virtual void generate_input() = 0;
   
 public:
   std::vector<double> _lb;
@@ -355,15 +353,118 @@ public:
 
 };
 
-template<>
-void CompetitionScenario<CompetitionType::Random>::generate_input() {
-  for(auto& v: _input)
-    v = neuralfield::random::uniform(0., 1.);
-}
+class RandomCompetition : public CompetitionScenario {
+public:
+  RandomCompetition(unsigned int nb_steps,
+		    std::vector<int> shape,
+		    double sigma,
+		    double dsigma,
+		    bool toric):
+    CompetitionScenario(nb_steps, shape, sigma, dsigma, toric) {}
 
-template<>
-void CompetitionScenario<CompetitionType::Structured>::generate_input() {
-  throw std::logic_error("unimplemented");
-}
+  void generate_input() {
+    for(auto& v: _input)
+      v = neuralfield::random::uniform(0., 1.);
+  }
+};
+
+class StructuredCompetition : public CompetitionScenario {
+private:
+  int _nb_gaussians;
+  double _sigma_gaussians;
+  
+public:
+  StructuredCompetition(unsigned int nb_steps,
+			std::vector<int> shape,
+			double sigma,
+			double dsigma,
+			bool toric,
+			int nb_gaussians,
+			double sigma_gaussians):
+    CompetitionScenario(nb_steps, shape, sigma, dsigma, toric),
+    _nb_gaussians(nb_gaussians),
+    _sigma_gaussians(sigma_gaussians) {}
+
+
+  void add_gaussian_input(std::vector<double> center, double A, double sigma) {
+    assert(shape.size() == center.size());
+    if(_shape.size() == 1) {
+
+      std::function<double(int)> dist;
+      if(_toric)
+	dist = [this, center] (int x_src) {
+	  double dx = std::min(fabs(center[0] - x_src), this->_shape[0] - fabs(center[0] - x_src));
+	  return dx;
+	};
+      else
+	dist = [center] (int x_src) {
+	  double dx = fabs(center[0] - x_src);
+	  return dx;
+	};
+      
+
+      auto it_input = _input.begin();
+      for(int i = 0 ; i < _shape[0]; ++i, ++it_input) {
+	double d = dist(i);
+	*it_input += A*exp(-d*d/(2.0 * sigma * sigma));
+      }
+    }
+    else if(_shape.size() == 2) {
+      std::function<double(int, int)> dist;
+      
+      if(_toric)
+	dist = [this, center] (int x_src, int y_src) {
+	  double dx = std::min(fabs(center[0] - x_src), this->_shape[0] - fabs(center[0] - x_src));
+	  double dy = std::min(fabs(center[1] - y_src), this->_shape[1] - fabs(center[1] - y_src));
+	  return sqrt(dx*dx + dy*dy);
+	};
+      else
+	dist = [center] (int x_src, int y_src) {
+	  double dx = fabs(center[0] - x_src);
+	  double dy = fabs(center[1] - y_src);
+	  return sqrt(dx*dx+dy*dy);
+	};
+
+      auto it_input = _input.begin();
+      for(int i = 0 ; i < _shape[0]; ++i) {
+	for(int j = 0 ; j < _shape[1]; ++j, ++it_input) {
+	  double d = dist(i, j);
+	  *it_input += A*exp(-d*d/(2.0 * sigma * sigma));
+	}
+      }
+
+      
+    }
+
+  }
+
+
+  void generate_input() {
+    // Reset the input
+    std::fill(_input.begin(), _input.end(), 0.0);
+
+    // Add the gaussians
+    std::vector<double> center(_shape.size());
+    for(unsigned int i = 0 ; i < _shape.size(); ++i)
+      center[i] = neuralfield::random::uniform(0, _shape[i]-1);
+    
+    for(int i = 0 ; i < _nb_gaussians; ++i) {
+      double A = neuralfield::random::uniform(0., 1.);
+      add_gaussian_input(center, A, _sigma_gaussians);
+    }
+
+    // Normalize so that the input peaks at 1.
+    double vmax = *(_input.begin());
+    
+    for(auto& v: _input) {
+      if(v > vmax)
+	vmax = v;
+    }
+    for(auto& v: _input) 
+      v = v / vmax;
+
+  }
+  
+};
 
 
