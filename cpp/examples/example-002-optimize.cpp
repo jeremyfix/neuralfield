@@ -173,9 +173,9 @@ void test(unsigned int nb_steps,
 
 int main(int argc, char * argv[]) {
 
-  if(argc != 2 and argc != 3) {
+  if(argc != 6 and argc != 7) {
     std::cerr << "Script to optimize a 2D neural field for a competition scenario" << std::endl;
-    std::cerr << "Usage : " << argv[0] << " N <M>" << std::endl;
+    std::cerr << "Usage : " << argv[0] << " sigma dsigma toric scale N <M>" << std::endl;
     std::exit(-1);
   }
 
@@ -188,18 +188,18 @@ int main(int argc, char * argv[]) {
   double sp = 2.;
   double Am = -1.3;
   double sm = 10.;
-  bool toric = false;
-  bool scale = false;
+  bool toric = std::atoi(argv[3]);
+  bool scale = std::atoi(argv[4]);
   unsigned int Nsteps = 100;
 
-  double sigma = 3.;
-  double dsigma = 1.;
+  double sigma = std::atof(argv[1]);
+  double dsigma = std::atof(argv[2]);
 
   std::vector<int> shape;
 
-  shape.push_back(std::atoi(argv[1]));
-  if(argc == 3)
-    shape.push_back(std::atoi(argv[2]));
+  shape.push_back(std::atoi(argv[5]));
+  if(argc == 7)
+    shape.push_back(std::atoi(argv[6]));
   
   auto input = neuralfield::input::input<Input>(shape, fillInput, "input");
 
@@ -258,7 +258,20 @@ int main(int argc, char * argv[]) {
   std::cout << "  Am     : " << best_params[2]*best_params[4] << std::endl;
   std::cout << "  sm     : " << best_params[3] << std::endl;
 
- 
-
+  std::cout << std::endl;
+  std::cout << " To test it : " << std::endl;
+  std::cout << " ./examples/example-002-test "
+	    <<  best_params[0] << " "
+	    <<  best_params[1] << " "
+	    <<  best_params[2] << " "
+	    <<  best_params[3]*best_params[5] << " "
+	    <<  best_params[2]*best_params[4] << " "
+	    <<  best_params[3] << " "
+	    <<  int(toric) << " "
+	    <<  int(scale) << " ";
+  for(auto& s: shape)
+    std::cout << s << " ";
+  std::cout << std::endl;
+    
   return 0;
 }

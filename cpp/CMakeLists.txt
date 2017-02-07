@@ -6,7 +6,7 @@ project (neuralfield)
 SET(PACKAGE_VERSION "1.00")
 SET(PACKAGE_LICENSE "GPL")
 
-SET(CMAKE_BUILD_TYPE Debug)
+SET(CMAKE_BUILD_TYPE Release)
 
 SET(PROJECT_DESCRIPTION_SUMMARY "C++ Library for parametrized NeuralFields")
 
@@ -19,9 +19,12 @@ find_package(PkgConfig)
 pkg_check_modules(FFTW fftw3 REQUIRED)
 pkg_check_modules(POPOT popot REQUIRED)
 
-set(PKG_CONFIG_DEPENDS "fftw3 popot")
+pkg_check_modules(OpenCV opencv REQUIRED)
 
-SET(PROJECT_LIBS "${FFTW_LDFLAGS} ${POPOT_LDFLAGS}")
+
+set(PKG_CONFIG_DEPENDS "fftw3 popot opencv")
+
+SET(PROJECT_LIBS "${FFTW_LDFLAGS} ${POPOT_LDFLAGS} ${OpenCV_LDFLAGS}")
 SET(PROJECT_CFLAGS -Wall -std=c++11)
 
 ###################################

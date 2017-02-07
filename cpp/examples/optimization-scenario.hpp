@@ -40,8 +40,7 @@ protected:
 public:
   std::vector<double> _lb;
   std::vector<double> _ub;
-  
-
+    
   CompetitionScenario(unsigned int nb_steps,
 		      std::vector<int> shape,
 		      double sigma,
@@ -316,15 +315,19 @@ public:
     fill_lower_bound(max_pos);
     fill_upper_bound(max_pos);
   }
-  
-  double evaluate(std::shared_ptr<neuralfield::Network> net) override {
-    // For a competition scenario, there must be a single bump
-    // its location depends on the argmax of a convoluted input
+
+  void set_input(std::shared_ptr<neuralfield::Network> net) {
     generate_input();
     
     net->reset();
     
     net->set_input<Input>("input", _input);
+  }
+  
+  double evaluate(std::shared_ptr<neuralfield::Network> net) override {
+    // For a competition scenario, there must be a single bump
+    // its location depends on the argmax of a convoluted input
+    set_input(net);
 
     for(unsigned int i = 0 ; i < _nb_steps; ++i)
       net->step();
@@ -445,10 +448,13 @@ public:
 
     // Add the gaussians
     std::vector<double> center(_shape.size());
-    for(unsigned int i = 0 ; i < _shape.size(); ++i)
-      center[i] = neuralfield::random::uniform(0, _shape[i]-1);
     
     for(int i = 0 ; i < _nb_gaussians; ++i) {
+
+
+      for(unsigned int i = 0 ; i < _shape.size(); ++i)
+	center[i] = neuralfield::random::uniform(0, _shape[i]-1);
+      
       double A = neuralfield::random::uniform(0., 1.);
       add_gaussian_input(center, A, _sigma_gaussians);
     }
