@@ -5,7 +5,13 @@
 #include <opencv/highgui.h>
 
 // Example of params :
-// ./examples/example-002-test 0.161126 1.61908 1.87441 2.35995 -0.970397 73.4035 0 0 50
+// 1D
+//  NonToric / NonScaled , 50
+//   ./examples/example-002-test 0.161126 1.61908 1.87441 2.35995 -0.970397 73.4035 0 0 50
+
+// 2D
+//  Toric / Unscaled 30x30
+//   ./examples/example-002-test 0.590007 1.65246 1.26578 7.71841 -1.14564 21.6151 1 0 30 30
 
 void fillInput(neuralfield::values_iterator begin,
 	       neuralfield::values_iterator end,
@@ -86,10 +92,10 @@ int main(int argc, char* argv[]) {
   while(!stop) {
 
     if(run) {
-      if(step < 100) {
-	net->step();
-	++step;
-      }
+      //if(step < 100) {
+      net->step();
+      ++step;
+	//}
     }
 
     // Fill in the images
