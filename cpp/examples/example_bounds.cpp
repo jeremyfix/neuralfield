@@ -4,19 +4,19 @@
 #include "optimization-scenario.hpp"
 
 int main(int argc, char* argv[]) {
-  if(argc != 2 && argc != 3) {
-    std::cerr << "Usage " << argv[0] << " N <M>" << std::endl;
+  if(argc != 4 && argc != 5) {
+    std::cerr << "Usage " << argv[0] << " sigma dsigma N <M>" << std::endl;
     return EXIT_FAILURE;
   }
 
   std::vector<int> shape;
-  shape.push_back(std::atoi(argv[1]));
+  shape.push_back(std::atoi(argv[3]));
   if(argc == 3)
-    shape.push_back(std::atoi(argv[2]));
+    shape.push_back(std::atoi(argv[4]));
 
 
-  double sigma = 2.0;
-  double dsigma = 0.5;
+  double sigma = std::atof(argv[1]);
+  double dsigma = std::atof(argv[2]);
   RandomCompetition scenar(100, shape, sigma, dsigma, true);
 
   std::vector<double> max_pos;

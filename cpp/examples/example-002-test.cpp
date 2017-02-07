@@ -13,6 +13,13 @@
 //  Toric / Unscaled 30x30
 //   ./examples/example-002-test 0.590007 1.65246 1.26578 7.71841 -1.14564 21.6151 1 0 30 30
 
+// Toric / Unscaled 8x8
+//   ./examples/example-002-test 0.302321 4.22222 2 1.45614 -1.51672 16.6327 1 0 8 8
+
+// NonToric / Scaled 30x30
+//   ./examples/example-002-test 0.190095 5 1.11131 2.7397 -0.542213 28.7883 0 1 30 30
+
+
 void fillInput(neuralfield::values_iterator begin,
 	       neuralfield::values_iterator end,
 	       const Input& x) {
