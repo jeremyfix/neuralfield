@@ -98,6 +98,31 @@ namespace neuralfield {
 							   int size1,
 							   int size2,
 							   std::string label="");
+
+
+    class UniformNoise : public  neuralfield::function::Layer {
+    private:
+      double _min, _max;
+    public:
+      UniformNoise(std::string label,
+	       std::vector<int> shape,
+	       double min, double max );
+      void update() override;
+      
+    };
+
+    std::shared_ptr<neuralfield::function::Layer> uniform_noise(double min, double max,
+								std::vector<int> shape,
+								std::string label="");
+
+    std::shared_ptr<neuralfield::function::Layer> uniform_noise(double min, double max,
+								int size,
+								std::string label="");
+
+    std::shared_ptr<neuralfield::function::Layer> uniform_noise(double min, double max,
+								int size1,
+								int size2,
+								std::string label="");
     
   }
 }

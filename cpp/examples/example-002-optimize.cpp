@@ -229,7 +229,7 @@ int main(int argc, char * argv[]) {
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   
-  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 300 || fitness <= 1e-5;};
+  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 1000 || fitness <= 1e-5;};
   
   auto cost_function = [Nsteps, shape, net, sigma, dsigma] (TVector& pos) -> double { 
     return evaluate(Nsteps, sigma, dsigma, shape, net, pos.getValuesPtr());

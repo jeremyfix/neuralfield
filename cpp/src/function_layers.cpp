@@ -1,5 +1,6 @@
 #include "function_layers.hpp"
 #include "network.hpp"
+#include "tools.hpp"
 
 neuralfield::function::Layer::Layer(std::string label,
 				    typename parameters_type::size_type number_of_parameters,
@@ -144,4 +145,44 @@ std::shared_ptr<neuralfield::function::Layer> neuralfield::function::constant(do
 						       std::string label) {
   return neuralfield::function::constant(value, std::vector<int>({size1, size2}), label);
 }
+
+
+
+
+neuralfield::function::UniformNoise::UniformNoise(std::string label,
+						  std::vector<int> shape,
+						  double min, double max):
+  neuralfield::function::Layer(label, 0, shape),
+  _min(min), _max(max) {
+  for(auto& v: _values)
+    v = neuralfield::random::uniform(_min, _max);
+}
+
+void neuralfield::function::UniformNoise::update() {
+  
+}
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::function::uniform_noise(double min, double max, std::vector<int> shape,
+										   std::string label) {
+  auto l = std::make_shared<neuralfield::function::UniformNoise>(neuralfield::function::UniformNoise(label, shape, min, max));
+  auto net = neuralfield::get_current_network();
+  net += l;
+  return l;
+}
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::function::uniform_noise(
+								double min, double max,
+								int size,
+								std::string label) {
+  return neuralfield::function::uniform_noise(min, max, std::vector<int>({size}), label);
+}
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::function::uniform_noise(double min, double max,
+										   int size1,
+										   int size2,
+										   std::string label) {
+  return neuralfield::function::uniform_noise(min, max, std::vector<int>({size1, size2}), label);
+}
     
+
+
