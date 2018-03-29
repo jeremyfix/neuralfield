@@ -26,6 +26,7 @@ before_install:
   - cd build
   - cmake .. -DCMAKE_INSTALL_PREFIX=/usr
   - sudo make install
+  - cd ../..
 
 script:
   - mkdir build
