@@ -13,6 +13,7 @@ addons:
     packages:
       - libfftw3-dev
       - libjsoncpp-dev
+      - libboost-python-dev
 
 sudo: required
 
