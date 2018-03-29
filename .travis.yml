@@ -2,7 +2,6 @@ language: cpp
 
 os:
   - linux
-  - osx
 
 compiler:
   - gcc
@@ -14,12 +13,11 @@ addons:
       - libfftw3-dev
       - libjsoncpp-dev
       - libboost-python-dev
+      - libopencv-dev
 
 sudo: required
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install fftw3 jsoncpp; fi
   - git clone https://github.com/jeremyfix/popot.git
   - cd popot
   - mkdir build
