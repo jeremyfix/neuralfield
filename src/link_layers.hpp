@@ -30,7 +30,7 @@
 #include <functional>
 #include <vector>
 #include <algorithm>
-
+#include <cmath>
 
 #include "layers.hpp"
 #include "function_layers.hpp"
