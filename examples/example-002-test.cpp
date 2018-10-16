@@ -1,8 +1,9 @@
 #include "neuralfield.hpp"
 #include "optimization-scenario.hpp"
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
 
 // Example of params :
 // 1D

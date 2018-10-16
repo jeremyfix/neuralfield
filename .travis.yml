@@ -1,3 +1,13 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker pull
+
+HAVE A LOOK TO : https://docs.travis-ci.com/user/docker/
+we can use a dockerfile given in the github repo to build our own image...!
+
 language: cpp
 
 os:
