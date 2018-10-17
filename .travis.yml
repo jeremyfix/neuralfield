@@ -1,6 +1,5 @@
 os: linux
-language: cpp
-sudo: required
+language: minimal
 
 services:
     - docker
