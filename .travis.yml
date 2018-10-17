@@ -5,4 +5,4 @@ services:
 
 before_install:
     - docker build -t neuralfield/latest .
-    - docker run neuralfield/latest /bin/sh -c "neuralfield-example-001-test-functions"
+    - docker run neuralfield/latest /bin/sh -c "neuralfield-example-000"
