@@ -14,6 +14,15 @@ std::shared_ptr<neuralfield::Network> neuralfield::get_current_network() {
   return neuralfield::Network::current_network;
 }
 
+void neuralfield::set_current_network(std::shared_ptr<neuralfield::Network> net) {
+    neuralfield::Network::current_network = net;
+}
+
+void neuralfield::clear_current_network(void) {
+    neuralfield::Network::current_network = std::make_shared<neuralfield::Network>();
+}
+
+
 std::shared_ptr<neuralfield::Network> neuralfield::operator+=(std::shared_ptr<neuralfield::Network> net, std::shared_ptr<neuralfield::input::AbstractLayer> l) {
   net->_input_layers.push_back(l);
   net->register_labelled_layer(l); 
@@ -125,6 +134,16 @@ std::shared_ptr<neuralfield::layer::Layer> neuralfield::Network::get(std::string
     
   return it->second;    
 }
+
+std::shared_ptr<neuralfield::layer::Layer> neuralfield::Network::operator[](std::string label) {
+  auto it = _labelled_layers.find(label);
+  if(it == _labelled_layers.end())
+    throw  std::logic_error("Cannot find layer labeled " + label);
+    
+  return it->second;    
+}
+
+
 
 void neuralfield::Network::print(void) {
   std::cout << std::string(8, '*') << " Network " << std::endl;

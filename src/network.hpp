@@ -41,6 +41,8 @@ namespace neuralfield {
 
   std::shared_ptr<Network> network(void);
   std::shared_ptr<Network> get_current_network(void);
+  void set_current_network(std::shared_ptr<Network>);
+  void clear_current_network(void);
   
   std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::input::AbstractLayer> l);
   std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::function::Layer> l);
@@ -69,6 +71,7 @@ namespace neuralfield {
     void print();
     
     std::shared_ptr<neuralfield::layer::Layer> get(std::string label);
+    std::shared_ptr<neuralfield::layer::Layer> operator[](std::string label);
 
     template<typename INPUT>
     std::shared_ptr<neuralfield::input::Layer<INPUT> > get_input(std::string label) {
@@ -97,6 +100,9 @@ namespace neuralfield {
     
     friend std::shared_ptr<Network> network(void);
     friend std::shared_ptr<Network> get_current_network(void);
+    friend void set_current_network(std::shared_ptr<Network>);
+    friend void clear_current_network(void);
+
     friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::input::AbstractLayer> l);
     friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::function::Layer> l);
     friend std::shared_ptr<Network> operator+=(std::shared_ptr<Network> net, std::shared_ptr<neuralfield::buffered::Layer> l);

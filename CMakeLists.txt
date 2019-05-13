@@ -1,7 +1,7 @@
 
 CMAKE_MINIMUM_REQUIRED( VERSION 2.8.4 )
 
-project (neuralfield) 
+project (neuralfield)
 
 SET(PACKAGE_VERSION "1.00")
 SET(PACKAGE_LICENSE "GPL")
@@ -25,7 +25,7 @@ pkg_check_modules(OpenCV opencv REQUIRED)
 set(PKG_CONFIG_DEPENDS "fftw3 popot opencv")
 
 SET(PROJECT_LIBS "${FFTW_LDFLAGS} ${POPOT_LDFLAGS} ${OpenCV_LDFLAGS}")
-SET(PROJECT_CFLAGS -Wall -std=c++11)
+SET(PROJECT_CFLAGS -Wall -std=c++14)
 
 ###################################
 # Some prefix definitions
@@ -75,10 +75,10 @@ add_subdirectory(doc)
 ###################################
 
 SET(DIST_DIR "${CMAKE_PROJECT_NAME}-${PACKAGE_VERSION}")
-ADD_CUSTOM_TARGET(dist 
+ADD_CUSTOM_TARGET(dist
 		  COMMAND rm -rf ${DIST_DIR}
 		  COMMAND mkdir  ${DIST_DIR}
-		  COMMAND cp -r ${CMAKE_SOURCE_DIR}/* ${DIST_DIR} || true 
+		  COMMAND cp -r ${CMAKE_SOURCE_DIR}/* ${DIST_DIR} || true
 		  COMMAND rm -rf ${DIST_DIR}/build
 		  COMMAND mkdir ${DIST_DIR}/build
   		  COMMAND tar --exclude="*~" --exclude="._*" --exclude=".svn" -zcvf ${DIST_DIR}.tar.gz ${DIST_DIR}
