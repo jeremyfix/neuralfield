@@ -7,35 +7,27 @@
 
 // Example of params :
 // 1D
-//  NonToric / NonScaled , 50
-//   ./examples/example-002-test 0.161126 1.61908 1.87441 2.35995 -0.970397 73.4035 0 0 50
+// ./examples/example-002-test 0.251907 4.3888 200 0.0327614 -199.686 1.30873 0 0 50
+// ./examples/example-002-test 0.251907 4.3888 200 0.0327614 -199.686 1.30873 0 0 1000
 
 
+////
 // 2D
 //  Toric / Unscaled 30x30
-//   ./examples/example-002-test 0.590007 1.65246 1.26578 7.71841 -1.14564 21.6151 1 0 30 30
 
 //  Toric / Unscaled 8x8
-//   ./examples/example-002-test 0.302321 4.22222 2 1.45614 -1.51672 16.6327 1 0 8 8
 
 //  Toric / NonScaled, 8x8   s=0.6   ds=0.4
-//   ./examples/example-002-test 0.291722 1.7163 1.98584 1.69201 -1.75374 38.7577 1 0 8 8
 
 
 
 //  Toric / NonScaled 8x8  s=1.5 ds=0.3
-//   ./examples/example-002-test 0.263694 3.61664 1.74731 1.49518 -1.09835 9.15757 1 0 8 8
 
 //  NonToric / NonScaled 8x8   s=1.5  ds=0.3
-//   ./examples/example-002-test 0.362887 -0.584324 2 2.61775 -1.38552 17.8737 0 0 8 8
 
 //  NonToric / NonScaled 8x8   s=0.6  ds=0.4
-//   ./examples/example-002-test 0.367331 1.30732 2 1.40605 -1.47777 11.7021 0 0 8 8
-
-
 
 //  NonToric / Scaled 30x30
-//   ./examples/example-002-test 0.190095 5 1.11131 2.7397 -0.542213 28.7883 0 1 30 30
 
 
 void fillInput(neuralfield::values_iterator begin,
