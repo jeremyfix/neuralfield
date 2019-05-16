@@ -10,7 +10,7 @@ void neuralfield::link::Gaussian::init_convolution() {
     if(_shape.size() == 1) {
         int k_shape;
         int k_center;
-        std::function<double(int, int)> dist;
+        std::function<float(int, int)> dist;
 
         if(_toric) {
             k_shape = _shape[0];
@@ -18,7 +18,7 @@ void neuralfield::link::Gaussian::init_convolution() {
             FFTW_Convolution::init_workspace(ws, FFTW_Convolution::CIRCULAR_SAME, _shape[0], 1, k_shape, 1);
 
             dist = [k_shape] (int x_src, int x_dst) {
-                int dx = std::min(abs(x_src-x_dst), k_shape - abs(x_src - x_dst));
+                float dx = (std::min(abs(x_src-x_dst), k_shape - abs(x_src - x_dst)))/float(k_shape);
                 return dx;
             };
         }
@@ -27,8 +27,8 @@ void neuralfield::link::Gaussian::init_convolution() {
             k_center = k_shape/2;
             FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME,  _shape[0], 1, k_shape, 1);
 
-            dist = [] (int x_src, int x_dst) {
-                return fabs(x_src-x_dst);
+            dist = [k_shape] (int x_src, int x_dst) {
+                return abs(x_src-x_dst)/float(k_shape);
             };
         }
 
@@ -37,7 +37,7 @@ void neuralfield::link::Gaussian::init_convolution() {
         double A = _parameters[0];
         double s = _parameters[1];
         for(int i = 0 ; i < k_shape ; ++i, ++kptr) {
-            double d = dist(i, k_center);
+            float d = dist(i, k_center);
             *kptr = A * exp(-d*d / (2.0 * s*s));
         }
 
@@ -66,7 +66,7 @@ void neuralfield::link::Gaussian::init_convolution() {
     else if(_shape.size() == 2) {
         std::vector<int> k_shape(2);
         std::vector<int> k_center(2);
-        std::function<double(int, int, int, int)> dist;
+        std::function<float(int, int, int, int)> dist;
         if(_toric) {
             k_shape[0] = _shape[0];
             k_shape[1] = _shape[1];
@@ -75,8 +75,8 @@ void neuralfield::link::Gaussian::init_convolution() {
             FFTW_Convolution::init_workspace(ws, FFTW_Convolution::CIRCULAR_SAME, _shape[0], _shape[1], k_shape[0], k_shape[1]);
 
             dist = [k_shape] (int x_src, int y_src, int x_dst, int y_dst) {
-                int dx = std::min(abs(x_src-x_dst), k_shape[0] - abs(x_src - x_dst));
-                int dy = std::min(abs(y_src-y_dst), k_shape[1] - abs(y_src - y_dst));
+                float dx = (std::min(abs(x_src-x_dst), k_shape[0] - abs(x_src - x_dst)))/float(k_shape[0]);
+                float dy = (std::min(abs(y_src-y_dst), k_shape[1] - abs(y_src - y_dst)))/float(k_shape[0]);
                 return sqrt(dx*dx + dy*dy);
             };
 
@@ -88,9 +88,9 @@ void neuralfield::link::Gaussian::init_convolution() {
             k_center[1] = k_shape[1]/2;
             FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME,  _shape[0], _shape[1], k_shape[0], k_shape[1]);
 
-            dist = [] (int x_src, int y_src, int x_dst, int y_dst) {
-                int dx = x_src-x_dst;
-                int dy = y_src-y_dst;
+            dist = [k_shape] (int x_src, int y_src, int x_dst, int y_dst) {
+                float dx = (x_src-x_dst)/float(k_shape[0]);
+                float dy = (y_src-y_dst)/float(k_shape[1]);
                 return sqrt(dx*dx + dy*dy);
             };
         }
@@ -101,7 +101,7 @@ void neuralfield::link::Gaussian::init_convolution() {
         double * kptr = kernel;
         for(int i = 0 ; i < k_shape[0] ; ++i) {
             for(int j = 0 ; j < k_shape[1]; ++j, ++kptr) {
-                double d = dist(i, j, k_center[0], k_center[1]);
+                float d = dist(i, j, k_center[0], k_center[1]);
                 *kptr = A * exp(-d*d / (2.0 * s*s));
             }
         }
