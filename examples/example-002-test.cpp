@@ -109,10 +109,10 @@ int main(int argc, char* argv[]) {
   if(shape.size() == 2)
     height = shape[1];
   else
-    height = 3./4. * width;
+    height = 100;
     
-  cv::Mat img_input;
-  cv::Mat img_fu;
+  cv::Mat img_input, resized_input;
+  cv::Mat img_fu, resized_fu;
 
   int step = 0;
   while(!stop) {
@@ -174,8 +174,11 @@ int main(int argc, char* argv[]) {
     std::string title = std::string("Step ") + std::to_string(step);
     std::cout << '\r' << title << std::flush;
     
-    cv::imshow("Input", img_input);
-    cv::imshow("f(u)", img_fu);
+    cv::resize(img_input, resized_input, cv::Size(250, 250));
+    cv::resize(img_fu, resized_fu, cv::Size(250, 250));
+
+    cv::imshow("Input", resized_input);
+    cv::imshow("f(u)", resized_fu);
     
     // Handle the keyboard
     char key = (char)cv::waitKey(1);

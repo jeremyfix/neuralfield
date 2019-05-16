@@ -38,7 +38,7 @@ void neuralfield::link::Gaussian::init_convolution() {
         double s = _parameters[1];
         for(int i = 0 ; i < k_shape ; ++i, ++kptr) {
             float d = dist(i, k_center);
-            *kptr = A * exp(-d*d / (2.0 * s*s));
+            *kptr = A * exp(-d*d / (2.0 * s*s))  * 1.0 / (k_shape);
         }
 
         /// Scaling of the weights
@@ -102,7 +102,7 @@ void neuralfield::link::Gaussian::init_convolution() {
         for(int i = 0 ; i < k_shape[0] ; ++i) {
             for(int j = 0 ; j < k_shape[1]; ++j, ++kptr) {
                 float d = dist(i, j, k_center[0], k_center[1]);
-                *kptr = A * exp(-d*d / (2.0 * s*s));
+                *kptr = A * exp(-d*d / (2.0 * s*s)) * 1.0 / (k_shape[0] * k_shape[1]);
             }
         }
 

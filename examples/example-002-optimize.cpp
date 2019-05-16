@@ -224,8 +224,8 @@ int main(int argc, char * argv[]) {
   const unsigned int Nparams = 6;
 
   //                                  dttau     h,  Ap,   sm, ka, ks 
-  std::array<double, Nparams> lbounds({0.01, -5.0, 0.01,  0.0, -1., 0.001});
-  std::array<double, Nparams> ubounds({1.00,  5.0, 2.0,   3.0, -0.01, 1.});
+  std::array<double, Nparams> lbounds({0.01, -5.0, 0.01,  0.0001, -1., 0.001});
+  std::array<double, Nparams> ubounds({1.00,  5.0, 200.0,   3.0, -0.01, 1.});
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   
