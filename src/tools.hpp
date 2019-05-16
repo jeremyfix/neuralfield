@@ -27,6 +27,7 @@
 
 #include <random>
 #include <cstdlib>
+#include <functional>
 
 namespace neuralfield {
   namespace random {
@@ -63,6 +64,46 @@ namespace neuralfield {
       return 0.0;
     }
 
+
+  }
+
+  namespace distances {
+
+      std::function<double(double, double)> make_euclidean_1D(std::array<int, 1> shape, 
+              bool toric) {
+          if(toric)
+              return [shape](double i0, double i1) -> double {
+                  double di = fabs(i0 - i1);
+                  return std::min(di, shape[0]-di) / double(shape[0]);
+              };
+          else
+              return [shape](double i0, double i1) -> double {
+                  double di = fabs(i0 - i1);
+                  return di / double(shape[0]);
+              };
+
+      }
+
+      std::function<double(std::array<double, 2>, std::array<double, 2>)> make_euclidean_2D(std::array<int, 2> shape,
+              bool toric) {
+          if(toric)
+              return [shape](std::array<double, 2> pos1,
+                             std::array<double, 2> pos2) -> double {
+                  double d0    = abs(pos1[0] - pos2[0]);
+                  double dd0 = std::min(d0, shape[0]-d0) / double(shape[0]);
+                  double d1    = abs(pos1[1] - pos2[1]);
+                  double dd1 = std::min(d1, shape[1]-d1) / double(shape[1]);
+                  return sqrt(dd0*dd0 + dd1*dd1);
+              };
+          else
+              return [shape](std::array<double, 2> pos1,
+                             std::array<double, 2> pos2) -> double {
+                  double d0    = abs(pos1[0] - pos2[0]);
+                  double d1    = abs(pos1[1] - pos2[1]);
+                  return sqrt(d0*d0 + d1*d1);
+              };
+
+      }
 
   }
 }

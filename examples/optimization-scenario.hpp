@@ -57,20 +57,19 @@ class CompetitionScenario : public Scenario {
 
                 src = new double[_size];
                 kernel = new double[_size];
+                ////////////////////////////
+                //  1D
                 if(shape.size() == 1) {
 
                     int k_shape;
                     int k_center;
-                    std::function<double(int, int)> dist;
 
                     // Linear convolution
                     k_shape = 2*_shape[0]-1;
                     k_center = k_shape/2;
                     FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME,  _shape[0], 1, k_shape, 1);
 
-                    dist = [] (int x_src, int x_dst) {
-                        return fabs(x_src-x_dst);
-                    };
+                    auto dist = neuralfield::distances::make_euclidean_1D({k_shape}, _toric);
 
                     kernel = new double[k_shape];
                     double * kptr = kernel;
@@ -81,24 +80,22 @@ class CompetitionScenario : public Scenario {
                         *kptr = A * exp(-d*d / (2.0 * s*s));
                     }
                 }
+                ////////////////////////////
+                //  2D
                 else if(shape.size() == 2) {
-                    std::vector<int> k_shape;
-                    std::vector<int> k_center;
-                    std::function<double(int, int, int, int)> dist;
-
+                    std::array<int, 2> k_shape;
+                    std::array<double, 2> k_center;
+                    
                     // Linear convolution
-                    k_shape.push_back(2*_shape[0]-1);
-                    k_shape.push_back(2*_shape[1]-1);
-                    k_center.push_back(k_shape[0]/2);
-                    k_center.push_back(k_shape[1]/2);
+                    k_shape[0] = 2*_shape[0]-1;
+                    k_shape[1] = 2*_shape[1]-1;
+                    k_center[0] = k_shape[0]/2;
+                    k_center[1] = k_shape[1]/2;
 
                     FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME,  _shape[0], _shape[1], k_shape[0], k_shape[1]);
 
-                    dist = [] (int x_src, int y_src, int x_dst, int y_dst) {
-                        double dx = fabs(x_src-x_dst);
-                        double dy = fabs(y_src-y_dst);
-                        return sqrt(dx*dx + dy*dy);
-                    };
+
+                    auto dist = neuralfield::distances::make_euclidean_2D(k_shape, false);
 
                     int k_size = k_shape[0] * k_shape[1];
                     kernel = new double[k_size];
@@ -107,7 +104,7 @@ class CompetitionScenario : public Scenario {
                     double s = _sigma;
                     for(int i = 0 ; i < k_shape[0] ; ++i) 
                         for(int j = 0 ; j < k_shape[1]; ++j, ++kptr) {
-                            double d = dist(i, j, k_center[0], k_center[1]);
+                            double d = dist({double(i), double(j)}, k_center);
                             *kptr = A * exp(-d*d / (2.0 * s*s));
                         }
                 }
@@ -120,6 +117,8 @@ class CompetitionScenario : public Scenario {
 
         template<typename ITER>
             std::vector<double> local_argmax(ITER begin, ITER end) {
+                ////////////////////////////
+                //  1D
                 if(_shape.size() == 1) {
                     // We convolve the input
                     std::copy(begin, end, src);
@@ -136,6 +135,8 @@ class CompetitionScenario : public Scenario {
                         }
                     return {double(argmax)};
                 }
+                ////////////////////////////
+                //  2D
                 else if(_shape.size() == 2) {
 
                     // We convolve the input
@@ -162,17 +163,16 @@ class CompetitionScenario : public Scenario {
 
         void fill_lower_bound(std::vector<double> max_pos) {
             // circular_rectified_cosine
+            ////////////////////////////
+            //  1D
             if(_shape.size() == 1) {
+                auto dist = neuralfield::distances::make_euclidean_1D({_shape[0]}, _toric);
                 int i = 0;
-                int N = _shape[0];
                 double d;
                 double cx = max_pos[0];
                 double s = _sigma - _dsigma;
                 for(auto& v: _lb) {
-                    if(_toric)
-                        d = std::min(fabs(cx - i), N - fabs(cx - i));
-                    else
-                        d = fabs(cx-i);
+                    d = dist(i, cx);
 
                     if(d >= 2*s)
                         v = 0;
@@ -181,28 +181,18 @@ class CompetitionScenario : public Scenario {
                     ++i;
                 }
             }
+            ////////////////////////////
+            //  2D
             else if(_shape.size() == 2) {
                 double s = _sigma - _dsigma;
                 auto it_lb = _lb.begin();
 
-                std::function<double(int, int)> dist;
-                if(_toric)
-                    dist = [this, max_pos] (int x_src, int y_src) {
-                        double dx = std::min(fabs(max_pos[0] - x_src), this->_shape[0] - fabs(max_pos[0] - x_src));
-                        double dy = std::min(fabs(max_pos[1] - y_src), this->_shape[1] - fabs(max_pos[1] - y_src));
-                        return sqrt(dx*dx + dy*dy);
-                    };
-                else
-                    dist = [max_pos] (int x_src, int y_src) {
-                        double dx = fabs(max_pos[0] - x_src);
-                        double dy = fabs(max_pos[1] - y_src);
-                        return sqrt(dx*dx+dy*dy);
-                    };
+                auto dist = neuralfield::distances::make_euclidean_2D({_shape[0], _shape[1]}, _toric);
 
                 double d;
                 for(int i = 0 ; i < _shape[0] ; ++i) {
                     for(int j = 0 ; j < _shape[1]; ++j, ++it_lb) {
-                        d = dist(i, j);
+                        d = dist({double(i), double(j)}, {max_pos[0], max_pos[1]});
 
                         if(d >= 2*s)
                             *it_lb = 0;
@@ -221,49 +211,39 @@ class CompetitionScenario : public Scenario {
             auto f = [](double x) {
                 return 1.0 / (1.0 + exp(-15. * (x - 0.5)));
             };
+            ////////////////////////////
+            //  1D
             if(_shape.size() == 1) {
                 double s = _sigma + _dsigma;
                 auto g = [s](double d) {
                     return exp(-d*d/(2.0 * s * s));
                 };
-                int N = _shape[0];
+                auto dist = neuralfield::distances::make_euclidean_1D({_shape[0]}, _toric);
+
                 int i = 0;
                 double cx = max_pos[0];
                 double d;
                 for(auto& v: _ub) {
-                    if(_toric)
-                        d = std::min(fabs(cx - i), N - fabs(cx - i));
-                    else
-                        d = fabs(cx - i);
+                    d = dist(i, cx);
                     v = f(g(d));
                     ++i;
                 }
             }
+            ////////////////////////////
+            //  2D
             else if(_shape.size() == 2) {
                 double s = _sigma + _dsigma;
                 auto g = [s](double d) {
                     return exp(-d*d/(2.0 * s * s));
                 };
 
-                std::function<double(int, int)> dist;
-                if(_toric)
-                    dist = [this, max_pos] (int x_src, int y_src) {
-                        double dx = std::min(fabs(max_pos[0] - x_src), this->_shape[0] - fabs(max_pos[0] - x_src));
-                        double dy = std::min(fabs(max_pos[1] - y_src), this->_shape[1] - fabs(max_pos[1] - y_src));
-                        return sqrt(dx*dx + dy*dy);
-                    };
-                else
-                    dist = [max_pos] (int x_src, int y_src) {
-                        double dx = fabs(max_pos[0] - x_src);
-                        double dy = fabs(max_pos[1] - y_src);
-                        return sqrt(dx*dx+dy*dy);
-                    };
-
+                auto dist = neuralfield::distances::make_euclidean_2D({this->_shape[0], this->_shape[1]}, _toric);
+                
                 double d;
                 auto it_ub = _ub.begin();
                 for(int i = 0 ; i < _shape[0] ; ++i) {
                     for(int j = 0 ; j < _shape[1]; ++j, ++it_ub) {
-                        d = dist(i, j);
+                        d = dist({double(i), double(j)}, {max_pos[0], max_pos[1]});
                         *it_ub = f(g(d));
                     }
                 }
@@ -277,7 +257,8 @@ class CompetitionScenario : public Scenario {
 
             auto it_lb = _lb.begin();
             auto it_ub = _ub.begin();
-
+            ////////////////////////////
+            //  1D
             if(_shape.size() == 1) {
                 std::ofstream out_lb, out_ub;
                 out_lb.open("lb_bound.data");
@@ -289,6 +270,8 @@ class CompetitionScenario : public Scenario {
                 out_lb.close();
                 out_ub.close();
             }
+            ////////////////////////////
+            //  2D
             else if(_shape.size() == 2) {
                 std::ofstream out_lb, out_ub;
                 out_lb.open("lb_bound.data");
@@ -391,54 +374,29 @@ class StructuredCompetition : public CompetitionScenario {
 
         void add_gaussian_input(std::vector<double> center, double A, double sigma) {
             assert(_shape.size() == center.size());
+            ////////////////////////////
+            //  1D
             if(_shape.size() == 1) {
-
-                std::function<double(int)> dist;
-                if(_toric)
-                    dist = [this, center] (int x_src) {
-                        double dx = std::min(fabs(center[0] - x_src), this->_shape[0] - fabs(center[0] - x_src));
-                        return dx;
-                    };
-                else
-                    dist = [center] (int x_src) {
-                        double dx = fabs(center[0] - x_src);
-                        return dx;
-                    };
-
-
+                auto dist = neuralfield::distances::make_euclidean_1D({_shape[0]}, _toric);
                 auto it_input = _input.begin();
                 for(int i = 0 ; i < _shape[0]; ++i, ++it_input) {
-                    double d = dist(i);
+                    float d = dist(i, center[0]);
                     *it_input += A*exp(-d*d/(2.0 * sigma * sigma));
                 }
             }
+            ////////////////////////////
+            //  2D
             else if(_shape.size() == 2) {
-                std::function<double(int, int)> dist;
-
-                if(_toric)
-                    dist = [this, center] (int x_src, int y_src) {
-                        double dx = std::min(fabs(center[0] - x_src), this->_shape[0] - fabs(center[0] - x_src));
-                        double dy = std::min(fabs(center[1] - y_src), this->_shape[1] - fabs(center[1] - y_src));
-                        return sqrt(dx*dx + dy*dy);
-                    };
-                else
-                    dist = [center] (int x_src, int y_src) {
-                        double dx = fabs(center[0] - x_src);
-                        double dy = fabs(center[1] - y_src);
-                        return sqrt(dx*dx+dy*dy);
-                    };
-
+                auto dist = neuralfield::distances::make_euclidean_2D({this->_shape[0], this->_shape[1]}, _toric);
+          
                 auto it_input = _input.begin();
                 for(int i = 0 ; i < _shape[0]; ++i) {
                     for(int j = 0 ; j < _shape[1]; ++j, ++it_input) {
-                        double d = dist(i, j);
+                        double d = dist({double(i), double(j)}, {center[0], center[1]});
                         *it_input += A*exp(-d*d/(2.0 * sigma * sigma));
                     }
                 }
-
-
             }
-
         }
 
 
@@ -450,7 +408,6 @@ class StructuredCompetition : public CompetitionScenario {
             std::vector<double> center(_shape.size());
 
             for(int i = 0 ; i < _nb_gaussians; ++i) {
-
 
                 for(unsigned int i = 0 ; i < _shape.size(); ++i)
                     center[i] = neuralfield::random::uniform(0, _shape[i]-1);
