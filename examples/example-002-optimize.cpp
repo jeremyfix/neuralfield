@@ -47,7 +47,7 @@ double evaluate(unsigned int nb_steps,
   auto s1 = RandomCompetition(nb_steps, shape, sigma, dsigma, toric_fitness);
   double f1 = s1.evaluate(net);
 
-  auto s2 = StructuredCompetition(nb_steps, shape, sigma, dsigma, toric_fitness, 5, shape[0]/5.);
+  auto s2 = StructuredCompetition(nb_steps, shape, sigma, dsigma, toric_fitness, 5, 1./5.);
   double f2 = s2.evaluate(net);
   
   return f1 + f2;
@@ -225,7 +225,7 @@ int main(int argc, char * argv[]) {
 
   //                                  dttau     h,  Ap,   sm, ka, ks 
   std::array<double, Nparams> lbounds({0.01, -5.0, 0.01,  0.0001, -1., 0.001});
-  std::array<double, Nparams> ubounds({1.00,  5.0, 200.0,   3.0, -0.01, 1.});
+  std::array<double, Nparams> ubounds({1.00,  5.0, 10000.0,   3.0, -0.01, 1.});
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   

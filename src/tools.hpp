@@ -73,13 +73,14 @@ namespace neuralfield {
               bool toric) {
           if(toric)
               return [shape](double i0, double i1) -> double {
-                  double di = fabs(i0 - i1);
-                  return std::min(di, shape[0]-di) / double(shape[0]);
+                  double d0  = fabs(i0 - i1);
+                  double dd0 = std::min(d0 , shape[0] - d0) / double(shape[0]);
+                  return dd0;
               };
           else
               return [shape](double i0, double i1) -> double {
-                  double di = fabs(i0 - i1);
-                  return di / double(shape[0]);
+                  double d0 = fabs(i0 - i1) / double(shape[0]);
+                  return d0;
               };
 
       }
@@ -98,8 +99,8 @@ namespace neuralfield {
           else
               return [shape](std::array<double, 2> pos1,
                              std::array<double, 2> pos2) -> double {
-                  double d0    = abs(pos1[0] - pos2[0]);
-                  double d1    = abs(pos1[1] - pos2[1]);
+                  double d0    = abs(pos1[0] - pos2[0]) / double(shape[0]);
+                  double d1    = abs(pos1[1] - pos2[1]) / double(shape[1]);
                   return sqrt(d0*d0 + d1*d1);
               };
 

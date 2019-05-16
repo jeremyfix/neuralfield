@@ -7,27 +7,34 @@
 
 // Example of params :
 // 1D
+
+// Non Toric 
+// ./examples/example-002-optimize 0.05 0.01 0 0 100
 // ./examples/example-002-test 0.251907 4.3888 200 0.0327614 -199.686 1.30873 0 0 50
 // ./examples/example-002-test 0.251907 4.3888 200 0.0327614 -199.686 1.30873 0 0 1000
+
+// Toric : 
+// ./examples/example-002-optimize 0.05 0.01 0 1 30 30
+// ./examples/example-002-test 0.462517 4.44093 5904.77 0.458582 -5895.56 0.7237 1 0 50
+// ./examples/example-002-test 0.462517 4.44093 5904.77 0.458582 -5895.56 0.7237 1 0 100
+// ./examples/example-002-test 0.462517 4.44093 5904.77 0.458582 -5895.56 0.7237 1 0 5000
 
 
 ////
 // 2D
-//  Toric / Unscaled 30x30
 
-//  Toric / Unscaled 8x8
+//  Toric 
 
-//  Toric / NonScaled, 8x8   s=0.6   ds=0.4
+// ./examples/example-002-optimize 0.05 0.01 0 1 30 30
+//  ./examples/example-002-test 0.180918 3.49606 6999.74 0.182084 -6836.98 0.942208 1 0 15 15
+//  ./examples/example-002-test 0.180918 3.49606 6999.74 0.182084 -6836.98 0.942208 1 0 30 30
+//  ./examples/example-002-test 0.180918 3.49606 6999.74 0.182084 -6836.98 0.942208 1 0 200 200
+//  ./examples/example-002-test 0.180918 3.49606 6999.74 0.182084 -6836.98 0.942208 1 0 500 500
 
-
-
-//  Toric / NonScaled 8x8  s=1.5 ds=0.3
-
-//  NonToric / NonScaled 8x8   s=1.5  ds=0.3
-
-//  NonToric / NonScaled 8x8   s=0.6  ds=0.4
-
-//  NonToric / Scaled 30x30
+//  NonToric 30x30
+//   ./examples/example-002-optimize 0.05 0.01 0 0 30 30
+//   ./examples/example-002-test 0.292056 0.913986 7069.06 0.0931234 -6764.38 1.95489 0 0 30 30
+//   ./examples/example-002-test 0.292056 0.913986 7069.06 0.0931234 -6764.38 1.95489 0 0 50 50
 
 
 void fillInput(neuralfield::values_iterator begin,
@@ -78,8 +85,8 @@ int main(int argc, char* argv[]) {
 
     net->init();
 
-    cv::namedWindow("Input", cv::WINDOW_NORMAL);
-    cv::namedWindow("f(u)", cv::WINDOW_NORMAL);
+    cv::namedWindow("Input", cv::WINDOW_AUTOSIZE);
+    cv::namedWindow("f(u)", cv::WINDOW_AUTOSIZE);
 
     std::cout << "Usage : " << std::endl;
     std::cout << "   <space> : pause/run " << std::endl;
@@ -94,7 +101,7 @@ int main(int argc, char* argv[]) {
     // We instanciante scenarios just for generating inputs
     // we do not care about the parameters of the fitness..
     auto s_random = RandomCompetition(0, shape, 0., 0., false);
-    auto s_struct = StructuredCompetition(0, shape, 0., 0., false, 5., shape[0]/5.);
+    auto s_struct = StructuredCompetition(0, shape, 0., 0., false, 5., 1./5.);
 
     unsigned int width = shape[0];
     unsigned int height;
@@ -166,8 +173,8 @@ int main(int argc, char* argv[]) {
         std::string title = std::string("Step ") + std::to_string(step);
         std::cout << '\r' << title << std::flush;
 
-        cv::resize(img_input, resized_input, cv::Size(250, 250));
-        cv::resize(img_fu, resized_fu, cv::Size(250, 250));
+        cv::resize(img_input, resized_input, cv::Size(500, 500));
+        cv::resize(img_fu, resized_fu, cv::Size(500, 500));
 
         cv::imshow("Input", resized_input);
         cv::imshow("f(u)", resized_fu);
