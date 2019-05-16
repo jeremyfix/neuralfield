@@ -35,6 +35,7 @@
 //   ./examples/example-002-optimize 0.05 0.01 0 0 30 30
 //   ./examples/example-002-test 0.292056 0.913986 7069.06 0.0931234 -6764.38 1.95489 0 0 30 30
 //   ./examples/example-002-test 0.292056 0.913986 7069.06 0.0931234 -6764.38 1.95489 0 0 50 50
+//   ./examples/example-002-test 0.292056 0.913986 7069.06 0.0931234 -6764.38 1.95489 0 0 200 200
 
 
 void fillInput(neuralfield::values_iterator begin,
