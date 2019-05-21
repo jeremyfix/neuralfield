@@ -380,7 +380,7 @@ class StructuredCompetition : public CompetitionScenario {
                 auto dist = neuralfield::distances::make_euclidean_1D({_shape[0]}, _toric);
                 auto it_input = _input.begin();
                 for(int i = 0 ; i < _shape[0]; ++i, ++it_input) {
-                    float d = dist(i, center[0]);
+                    double d = dist(i, center[0]);
                     *it_input += A*exp(-d*d/(2.0 * sigma * sigma));
                 }
             }
@@ -403,7 +403,7 @@ class StructuredCompetition : public CompetitionScenario {
         void generate_input() {
             // Reset the input
             std::fill(_input.begin(), _input.end(), 0.0);
-
+            
             // Add the gaussians
             std::vector<double> center(_shape.size());
 

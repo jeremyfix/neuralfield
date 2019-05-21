@@ -104,58 +104,73 @@ int main(int argc, char* argv[]) {
     // we do not care about the parameters of the fitness..
     auto s_random = RandomCompetition(0, shape, 0., 0., false);
     auto s_struct = StructuredCompetition(0, shape, 0., 0., false, 5., 1./5.);
+    s_random.set_input(net);
 
-    unsigned int width = shape[0];
+    unsigned int width;
     unsigned int height;
-    if(shape.size() == 2)
+    if(shape.size() == 2) {
+        width = shape[0];
         height = shape[1];
-    else
-        height = 100;
+    }
+    else {
+        width = 500;
+        height = 500;
+    }
 
-    cv::Mat img_input, resized_input;
-    cv::Mat img_fu, resized_fu;
+    cv::Mat img_input;
+    cv::Mat resized_input = cv::Mat::zeros(cv::Size(500, 500), CV_8UC3);
+    cv::Mat img_fu;
+    cv::Mat resized_fu = cv::Mat::zeros(cv::Size(500, 500), CV_8UC3);
 
     int step = 0;
     while(!stop) {
 
         if(run) {
-            //if(step < 100) {
             net->step();
             ++step;
-            //}
         }
 
         // Fill in the images
         if(shape.size() == 1) {
             cv::Point prev, next;
+            
+            {
+                resized_input.setTo(255);
+                auto it_input = net->get("input")->begin();
+                auto it_end   = net->get("input")->end();
+                int i = 0;
+                prev.x = double(i)/shape[0] * width;
+                prev.y = (1.-(*it_input))*height;
+                ++it_input;
+                ++i;
+                while(it_input != it_end) {
+                    next.x = double(i)/shape[0] * width;
+                    next.y = (1.-(*it_input))*height;
+                    cv::line(resized_input, prev, next, cv::Scalar(255, 0, 0));
 
-            img_input = cv::Mat::zeros(height, width, CV_8UC3);
-            img_input.setTo(255);
-            auto it_input = net->get("input")->begin();
-            next.x = 0;
-            next.y = (1.-(*it_input))*height;
-            ++it_input;
-            for(unsigned int i = 1 ; i < width; ++i, ++it_input) {
-                prev = next;
-                next.x = i;
-                next.y = (1.-(*it_input))*height;
-                cv::line(img_input, prev, next, cv::Scalar(255, 0, 0));
+                    prev = next;
+                    ++it_input;
+                    ++i;
+                }
             }
-
-            img_fu = cv::Mat::zeros(height, width, CV_8UC3);
-            img_fu.setTo(255);
-            auto it_fu = net->get("fu")->begin();
-            next.x = 0;
-            next.y = (1.-(*it_fu))*height;
-            ++it_input;
-            for(unsigned int i = 1 ; i < width; ++i, ++it_fu) {
-                prev = next;
-                next.x = i;
-                next.y = (1.-(*it_fu))*height;
-                cv::line(img_fu, prev, next, cv::Scalar(255, 0, 0));
+ 
+            {
+                resized_fu.setTo(255);
+                auto it_fu  = net->get("fu")->begin();
+                auto it_end = net->get("fu")->end();
+                int i = 0;
+                prev.x = double(i)/shape[0] * width;
+                prev.y = (1.-(*it_fu))*height;
+                ++it_fu;
+                while(it_fu != it_end) { 
+                    next.x = double(i)/shape[0] * width;
+                    next.y = (1.-(*it_fu))*height;
+                    cv::line(resized_fu, prev, next, cv::Scalar(255, 0, 0));
+                    prev = next;
+                    ++it_fu;
+                    ++i;
+                }
             }
-
-
         }
         else if(shape.size() == 2) {
             img_input = cv::Mat::zeros(height, width, CV_32F);
@@ -171,13 +186,12 @@ int main(int argc, char* argv[]) {
                 for(unsigned int j = 0 ; j < width; ++j, ++it_fu)
                     img_fu.at<float>(i,j) = *it_fu;
 
+            cv::resize(img_input, resized_input, cv::Size(500, 500));
+            cv::resize(img_fu, resized_fu, cv::Size(500, 500));
         }
         std::string title = std::string("Step ") + std::to_string(step);
         std::cout << '\r' << title << std::flush;
-
-        cv::resize(img_input, resized_input, cv::Size(500, 500));
-        cv::resize(img_fu, resized_fu, cv::Size(500, 500));
-
+        
         cv::imshow("Input", resized_input);
         cv::imshow("f(u)", resized_fu);
 
