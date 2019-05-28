@@ -69,7 +69,7 @@ namespace neuralfield {
 
   namespace distances {
 
-      std::function<double(double, double)> make_euclidean_1D(std::array<int, 1> shape, 
+      inline std::function<double(double, double)> make_euclidean_1D(std::array<int, 1> shape, 
               bool toric) {
           if(toric)
               return [shape](double i0, double i1) -> double {
@@ -85,7 +85,7 @@ namespace neuralfield {
 
       }
 
-      std::function<double(std::array<double, 2>, std::array<double, 2>)> make_euclidean_2D(std::array<int, 2> shape,
+      inline std::function<double(std::array<double, 2>, std::array<double, 2>)> make_euclidean_2D(std::array<int, 2> shape,
               bool toric) {
           if(toric)
               return [shape](std::array<double, 2> pos1,
