@@ -10,27 +10,21 @@ void neuralfield::link::Gaussian::init_convolution() {
     if(_shape.size() == 1) {
         int k_shape;
         int k_center;
-        std::function<float(int, int)> dist;
 
         if(_toric) {
             k_shape = _shape[0];
             k_center = 0;
             FFTW_Convolution::init_workspace(ws, FFTW_Convolution::CIRCULAR_SAME, _shape[0], 1, k_shape, 1);
 
-            dist = [k_shape] (int x_src, int x_dst) {
-                float dx = (std::min(abs(x_src-x_dst), k_shape - abs(x_src - x_dst)))/float(k_shape);
-                return dx;
-            };
         }
         else {
             k_shape = 2*_shape[0]-1;
             k_center = k_shape/2;
             FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME,  _shape[0], 1, k_shape, 1);
 
-            dist = [k_shape] (int x_src, int x_dst) {
-                return abs(x_src-x_dst)/float(k_shape);
-            };
         }
+
+        auto dist = neuralfield::distances::make_euclidean_1D({k_shape,}, _toric);
 
         kernel = new double[k_shape];
         double * kptr = kernel;
