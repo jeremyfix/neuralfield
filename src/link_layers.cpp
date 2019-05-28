@@ -1,6 +1,6 @@
 #include "link_layers.hpp"
 #include "network.hpp"
-
+#include "tools.hpp"
 
 void neuralfield::link::Gaussian::init_convolution() {
     FFTW_Convolution::clear_workspace(ws);
