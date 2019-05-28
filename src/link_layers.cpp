@@ -58,22 +58,14 @@ void neuralfield::link::Gaussian::init_convolution() {
 
     }
     else if(_shape.size() == 2) {
-        std::vector<int> k_shape(2);
-        std::vector<int> k_center(2);
-        std::function<float(int, int, int, int)> dist;
+        std::array<int, 2> k_shape;
+        std::array<double, 2> k_center;
         if(_toric) {
             k_shape[0] = _shape[0];
             k_shape[1] = _shape[1];
-            k_center[0] = 0;
-            k_center[1] = 0;
+            k_center[0] = 0.;
+            k_center[1] = 0.;
             FFTW_Convolution::init_workspace(ws, FFTW_Convolution::CIRCULAR_SAME, _shape[0], _shape[1], k_shape[0], k_shape[1]);
-
-            dist = [k_shape] (int x_src, int y_src, int x_dst, int y_dst) {
-                float dx = (std::min(abs(x_src-x_dst), k_shape[0] - abs(x_src - x_dst)))/float(k_shape[0]);
-                float dy = (std::min(abs(y_src-y_dst), k_shape[1] - abs(y_src - y_dst)))/float(k_shape[0]);
-                return sqrt(dx*dx + dy*dy);
-            };
-
         }
         else {
             k_shape[0] = 2*_shape[0]-1;
@@ -81,13 +73,9 @@ void neuralfield::link::Gaussian::init_convolution() {
             k_center[0] = k_shape[0]/2;
             k_center[1] = k_shape[1]/2;
             FFTW_Convolution::init_workspace(ws, FFTW_Convolution::LINEAR_SAME,  _shape[0], _shape[1], k_shape[0], k_shape[1]);
-
-            dist = [k_shape] (int x_src, int y_src, int x_dst, int y_dst) {
-                float dx = (x_src-x_dst)/float(k_shape[0]);
-                float dy = (y_src-y_dst)/float(k_shape[1]);
-                return sqrt(dx*dx + dy*dy);
-            };
         }
+
+        auto dist = neuralfield::distances::make_euclidean_2D(k_shape, _toric);
 
         kernel = new double[k_shape[0]*k_shape[1]];
         double A = _parameters[0];
@@ -95,7 +83,7 @@ void neuralfield::link::Gaussian::init_convolution() {
         double * kptr = kernel;
         for(int i = 0 ; i < k_shape[0] ; ++i) {
             for(int j = 0 ; j < k_shape[1]; ++j, ++kptr) {
-                float d = dist(i, j, k_center[0], k_center[1]);
+                float d = dist({(double)i, (double)j}, k_center);
                 *kptr = A * exp(-d*d / (2.0 * s*s)) * 1.0 / (k_shape[0] * k_shape[1]);
             }
         }
