@@ -39,7 +39,31 @@
 namespace neuralfield {
   namespace link {
 
-    class Gaussian : public neuralfield::function::Layer {
+
+      class Constant : public neuralfield::function::Layer {
+
+        public:
+            Constant(std::string label,
+                    double value,
+                    std::vector<int> shape);
+            ~Constant(void);
+            void update() override;
+      };
+
+    std::shared_ptr<neuralfield::function::Layer> constant(double value,
+							   std::vector<int> shape,
+							   std::string label="");
+    
+    std::shared_ptr<neuralfield::function::Layer> constant(double value,
+							   int size,
+							   std::string label="");
+    
+    std::shared_ptr<neuralfield::function::Layer> constant(double value,
+							   int size1,
+							   int size2,
+							   std::string label= "");
+
+     class Gaussian : public neuralfield::function::Layer {
       
     protected:
       FFTW_Convolution::Workspace ws;

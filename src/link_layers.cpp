@@ -2,6 +2,49 @@
 #include "network.hpp"
 #include "tools.hpp"
 
+
+neuralfield::link::Constant::Constant(std::string label, double value, std::vector<int> shape): neuralfield::function::Layer(label, 1, shape) {
+    neuralfield::function::Layer::set_parameters({value});
+    
+}
+
+neuralfield::link::Constant::~Constant(void) {
+
+}
+
+void neuralfield::link::Constant::update(void) {
+    auto prev = (*_prevs.begin());
+    auto it_prev = prev->begin();
+    double factor = _parameters[0] / ((double) this->size());
+    for(auto& v: *this) 
+        v = factor * (*it_prev++);
+}
+
+
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::link::constant(double value,
+        std::vector<int> shape,
+        std::string label) {
+    auto l = std::shared_ptr<neuralfield::link::Constant>(new neuralfield::link::Constant(label, value, shape));
+    auto net = neuralfield::get_current_network();
+    net += l;
+    return l;
+}
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::link::constant(double value,
+        int size,
+        std::string label) {
+    return neuralfield::link::constant(value, std::vector<int>({size}), label);
+}
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::link::constant(double value,
+        int size1,
+        int size2,
+        std::string label) {
+    return neuralfield::link::constant(value, std::vector<int>({size1, size2}), label);
+}
+
+
 void neuralfield::link::Gaussian::init_convolution() {
     FFTW_Convolution::clear_workspace(ws);
     delete[] kernel;
