@@ -3,45 +3,91 @@
 #include "tools.hpp"
 
 
-neuralfield::link::Constant::Constant(std::string label, double value, std::vector<int> shape): neuralfield::function::Layer(label, 1, shape) {
-    neuralfield::function::Layer::set_parameters({value});
+neuralfield::link::Heaviside::Heaviside(std::string label,
+        double value, 
+        double radius,
+        std::vector<int> shape): neuralfield::function::Layer(label, 1, shape) {
+    neuralfield::function::Layer::set_parameters({value, radius});
     
 }
 
-neuralfield::link::Constant::~Constant(void) {
+neuralfield::link::Heaviside::~Heaviside(void) {
 
 }
 
-void neuralfield::link::Constant::update(void) {
+void neuralfield::link::Heaviside::update(void) {
+    // 
+    // 
+    //           ooooooo+ooooooooooooooooo
+    //               |-----|
+    //
+    //   For computing the contribution for the next
+    //   position, we just need to update the corner values
+    //
+    //           oooooooo+oooooooooooooooo
+    //               -......+
+    //
+    // The iterator over the previous layer is a sliding window
+    // For the very first contribution, only the right part of the window
+    // is used and the left part progressively unravels
+    // until the left part of the window is fully visible and this corner
+    // begin to shift.
+    // Below we depict how the window shifts when updating from the leftmost
+    // to the rightmost until
+    //    ---|.....
+    //    ----|....
+    //    -----|...
+    //    |-----|..
+    //    .|-----|.
+    //    ..|-----|
+    //    ...|-----
+    //    ....|----
+    //    .....|---
+    //
+    //    NOTE : Should we be using integral image ?
     auto prev = (*_prevs.begin());
-    auto it_prev = prev->begin();
+    auto it_left = prev->begin();
+    auto it_right = prev->begin();
+    
+    auto it_v = this->begin();
+    
     double factor = _parameters[0] / ((double) this->size());
-    for(auto& v: *this) 
-        v = factor * (*it_prev++);
+
+    // We need to compute the contribution for the first unit
+    double w_contrib = 0.0;
+    //....... TO BE DONE
+    *it_v = factor * w_contrib; 
+
+    // And then iterate and update the corner values only
+    while(it_v != this->end()) {
+        w_contrib = w_contrib - (*it_left) + (*it_right); // TO BE DONE
+        (*it_v) = factor * w_contrib;
+        ++it_v;
+    }
 }
 
 
 
-std::shared_ptr<neuralfield::function::Layer> neuralfield::link::constant(double value,
+std::shared_ptr<neuralfield::function::Layer> neuralfield::link::heaviside(double value, double radius,
         std::vector<int> shape,
         std::string label) {
-    auto l = std::shared_ptr<neuralfield::link::Constant>(new neuralfield::link::Constant(label, value, shape));
+    auto l = std::shared_ptr<neuralfield::link::Heaviside>(new neuralfield::link::Heaviside(label, value, radius, shape));
     auto net = neuralfield::get_current_network();
     net += l;
     return l;
 }
 
-std::shared_ptr<neuralfield::function::Layer> neuralfield::link::constant(double value,
+std::shared_ptr<neuralfield::function::Layer> neuralfield::link::heaviside(double value, double radius,
         int size,
         std::string label) {
-    return neuralfield::link::constant(value, std::vector<int>({size}), label);
+    return neuralfield::link::heaviside(value, radius, std::vector<int>({size}), label);
 }
 
-std::shared_ptr<neuralfield::function::Layer> neuralfield::link::constant(double value,
+std::shared_ptr<neuralfield::function::Layer> neuralfield::link::heaviside(double value, double radius,
         int size1,
         int size2,
         std::string label) {
-    return neuralfield::link::constant(value, std::vector<int>({size1, size2}), label);
+    return neuralfield::link::heaviside(value, radius, std::vector<int>({size1, size2}), label);
 }
 
 

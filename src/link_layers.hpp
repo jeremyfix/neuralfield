@@ -40,25 +40,26 @@ namespace neuralfield {
   namespace link {
 
 
-      class Constant : public neuralfield::function::Layer {
+      class Heaviside : public neuralfield::function::Layer {
 
         public:
-            Constant(std::string label,
+            Heaviside(std::string label,
                     double value,
+                    double radius, 
                     std::vector<int> shape);
-            ~Constant(void);
+            ~Heaviside(void);
             void update() override;
       };
 
-    std::shared_ptr<neuralfield::function::Layer> constant(double value,
+    std::shared_ptr<neuralfield::function::Layer> heaviside(double value, double radius,
 							   std::vector<int> shape,
 							   std::string label="");
     
-    std::shared_ptr<neuralfield::function::Layer> constant(double value,
+    std::shared_ptr<neuralfield::function::Layer> heaviside(double value, double radius,
 							   int size,
 							   std::string label="");
     
-    std::shared_ptr<neuralfield::function::Layer> constant(double value,
+    std::shared_ptr<neuralfield::function::Layer> heaviside(double value, double radius,
 							   int size1,
 							   int size2,
 							   std::string label= "");

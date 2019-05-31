@@ -9,6 +9,7 @@ typedef popot::rng::CRNG RNG_GENERATOR;
 typedef popot::algorithm::ParticleStochasticSPSO::VECTOR_TYPE TVector;
 
 
+#define RADIUS_SM 1.0
 
 void fillInput(neuralfield::values_iterator begin,
 	       neuralfield::values_iterator end,
@@ -33,7 +34,7 @@ double evaluate(unsigned int nb_steps,
   double Am = params[4];
   
   net->get("gexc")->set_parameters({Ap, sp});
-  net->get("ginh")->set_parameters({Am});
+  net->get("ginh")->set_parameters({Am, RADIUS_SM});
   net->get("h")->set_parameters({h});
   net->get("u")->set_parameters({dt_tau});
 
@@ -67,7 +68,7 @@ void test(unsigned int nb_steps,
   double Am = params[4];
   
   net->get("gexc")->set_parameters({Ap, sp});
-  net->get("ginh")->set_parameters({Am});
+  net->get("ginh")->set_parameters({Am, RADIUS_SM});
   net->get("h")->set_parameters({baseline});
   net->get("u")->set_parameters({dt_tau});
   
@@ -162,7 +163,7 @@ int main(int argc, char * argv[]) {
   auto h = neuralfield::function::constant(baseline, shape, "h");
   auto u = neuralfield::buffered::leaky_integrator(dt_tau, shape, "u");
   auto g_exc = neuralfield::link::gaussian(Ap, sp, toric, scale, shape,"gexc");
-  auto g_inh =  neuralfield::link::constant(Am, shape, "ginh");
+  auto g_inh =  neuralfield::link::heaviside(Am, RADIUS_SM, shape, "ginh");
   auto fu = neuralfield::function::function("sigmoid", shape, "fu");
 
   g_exc->connect(fu);
