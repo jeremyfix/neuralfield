@@ -12,17 +12,17 @@ typedef popot::algorithm::ParticleStochasticSPSO::VECTOR_TYPE TVector;
 #define RADIUS_SM 1.0
 
 void fillInput(neuralfield::values_iterator begin,
-	       neuralfield::values_iterator end,
-	       const Input& x) {
+           neuralfield::values_iterator end,
+           const Input& x) {
   std::copy(x.begin(), x.end(), begin);
 }
 
 double evaluate(unsigned int nb_steps,
-		double sigma,
-		double dsigma,
-		std::vector<int> shape,
-		std::shared_ptr<neuralfield::Network> net,
-		double * params) {
+        double sigma,
+        double dsigma,
+        std::vector<int> shape,
+        std::shared_ptr<neuralfield::Network> net,
+        double * params) {
 
   // Set the parameters of the field
   // params = [dttau     h,  Ap,   sp, Am]
@@ -52,11 +52,11 @@ double evaluate(unsigned int nb_steps,
 
 
 void test(unsigned int nb_steps,
-	  double sigma,
-	  double dsigma,
-	  std::vector<int> shape,
-	  std::shared_ptr<neuralfield::Network> net,
-	  double * params) {
+      double sigma,
+      double dsigma,
+      std::vector<int> shape,
+      std::shared_ptr<neuralfield::Network> net,
+      double * params) {
 
 
   std::cout << "Testing" << std::endl;
@@ -106,8 +106,8 @@ void test(unsigned int nb_steps,
   else if(shape.size() == 2) {
     for(int i = 0 ; i < shape[0] ; ++i) {
       for(int j = 0 ; j < shape[1]; ++j, ++it_input, ++it_fu) {
-	out_input << *it_input << std::endl;
-	out_fu << *it_fu << std::endl;
+    out_input << *it_input << std::endl;
+    out_fu << *it_fu << std::endl;
       }
       out_input << std::endl;
       out_fu << std::endl;
@@ -193,11 +193,11 @@ int main(int argc, char * argv[]) {
   };
   
   auto algo = popot::algorithm::stochastic_montecarlo_spso2006(Nparams, 
-							       lbound, 
-							       ubound, 
-							       stop, 
-							       cost_function, 
-							       1);
+                                   lbound, 
+                                   ubound, 
+                                   stop, 
+                                   cost_function, 
+                                   1);
     
   // We run the algorithm
   algo->run(1);
@@ -217,13 +217,13 @@ int main(int argc, char * argv[]) {
   std::cout << std::endl;
   std::cout << " To test it : " << std::endl;
   std::cout << " ./examples/example-002-test "
-	    <<  best_params[0] << " "
-	    <<  best_params[1] << " "
-	    <<  best_params[2] << " "
-	    <<  best_params[3] << " "
-	    <<  best_params[4] << " "
-	    <<  int(toric) << " "
-	    <<  int(scale) << " ";
+        <<  best_params[0] << " "
+        <<  best_params[1] << " "
+        <<  best_params[2] << " "
+        <<  best_params[3] << " "
+        <<  best_params[4] << " "
+        <<  int(toric) << " "
+        <<  int(scale) << " ";
   for(auto& s: shape)
     std::cout << s << " ";
   std::cout << std::endl;
