@@ -8,62 +8,65 @@ neuralfield::link::Heaviside::Heaviside(std::string label,
         double radius,
         std::vector<int> shape): neuralfield::function::Layer(label, 1, shape) {
     neuralfield::function::Layer::set_parameters({value, radius});
-    
+    _integralImage = new double[this->size()];
 }
 
 neuralfield::link::Heaviside::~Heaviside(void) {
-
+    delete[] _integralImage;
 }
 
 void neuralfield::link::Heaviside::update(void) {
-    // 
-    // 
-    //           ooooooo+ooooooooooooooooo
-    //               |-----|
-    //
-    //   For computing the contribution for the next
-    //   position, we just need to update the corner values
-    //
-    //           oooooooo+oooooooooooooooo
-    //               -......+
-    //
-    // The iterator over the previous layer is a sliding window
-    // For the very first contribution, only the right part of the window
-    // is used and the left part progressively unravels
-    // until the left part of the window is fully visible and this corner
-    // begin to shift.
-    // Below we depict how the window shifts when updating from the leftmost
-    // to the rightmost until
-    //    ---|.....
-    //    ----|....
-    //    -----|...
-    //    |-----|..
-    //    .|-----|.
-    //    ..|-----|
-    //    ...|-----
-    //    ....|----
-    //    .....|---
-    //
-    //    NOTE : Should we be using integral image ?
-    auto prev = (*_prevs.begin());
-    auto it_left = prev->begin();
-    auto it_right = prev->begin();
-    
-    auto it_v = this->begin();
-    
     double factor = _parameters[0] / ((double) this->size());
+    
+    if(this->shape().size() == 1) {
+        // We compute the integral image
+        double* intImgPtr = _integralImage;
+        auto prev = *(_prevs.begin());
+        double acu = 0;
+        for(const auto& v_prev: *prev) {
+            acu += v_prev;
+            *intImgPtr = acu;
+            ++intImgPtr;
+        }
 
-    // We need to compute the contribution for the first unit
-    double w_contrib = 0.0;
-    //....... TO BE DONE
-    *it_v = factor * w_contrib; 
+        intImgPtr = _integralImage;
+        for(unsigned int i = 0 ; i< this->size() ; ++i)
+            std::cout << "int " << i << " : " << *(intImgPtr++) << std::endl;
+        
+        
+        // And then compute the weight contribution
+        // by computing the difference of the right values
+        // in the integral image
 
-    // And then iterate and update the corner values only
-    while(it_v != this->end()) {
-        w_contrib = w_contrib - (*it_left) + (*it_right); // TO BE DONE
-        (*it_v) = factor * w_contrib;
-        ++it_v;
+        unsigned int idx = 0;
+        unsigned int idx_for_left = (unsigned int)(_parameters[1] * this->shape()[0]+1);
+        std::cout << idx_for_left << std::endl;
+        auto it_left  = _integralImage;
+        auto it_right = _integralImage + std::min(idx_for_left, this->size() - 1);
+        auto it_endm1 = _integralImage + this->size() - 1;
+        double contrib = 0.0;
+        for(auto& v: *this) {
+            
+            contrib = *it_right;
+            std::cout << "contrib : " << contrib << std::endl;
+            if(idx >= idx_for_left)
+                contrib = contrib - *it_left;
+
+            v = factor * contrib;
+
+            if(idx >= idx_for_left)
+                ++it_left;
+            if(it_right != it_endm1)
+                ++it_right;
+            ++idx;
+        }
+    
     }
+    else if(this->shape().size() == 2) {
+        throw std::runtime_error("neuralfield::link::Heaviside::update cannot handle neuralfield of dimensions >= 2");
+    }
+    else 
+        throw std::runtime_error("neuralfield::link::Heaviside::update cannot handle neuralfield of dimensions > 2");
 }
 
 

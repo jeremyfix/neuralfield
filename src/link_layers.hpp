@@ -37,95 +37,98 @@
 #include "types.hpp"
 
 namespace neuralfield {
-  namespace link {
+    namespace link {
 
 
-      class Heaviside : public neuralfield::function::Layer {
+        class Heaviside : public neuralfield::function::Layer {
 
-        public:
-            Heaviside(std::string label,
-                    double value,
-                    double radius, 
-                    std::vector<int> shape);
-            ~Heaviside(void);
-            void update() override;
-      };
+            private:
+                double * _integralImage;
 
-    std::shared_ptr<neuralfield::function::Layer> heaviside(double value, double radius,
-							   std::vector<int> shape,
-							   std::string label="");
-    
-    std::shared_ptr<neuralfield::function::Layer> heaviside(double value, double radius,
-							   int size,
-							   std::string label="");
-    
-    std::shared_ptr<neuralfield::function::Layer> heaviside(double value, double radius,
-							   int size1,
-							   int size2,
-							   std::string label= "");
+            public:
+                Heaviside(std::string label,
+                        double value,
+                        double radius,
+                        std::vector<int> shape);
+                ~Heaviside(void);
+                void update() override;
+        };
 
-     class Gaussian : public neuralfield::function::Layer {
-      
-    protected:
-      FFTW_Convolution::Workspace ws;
-      bool _toric;
-      double * kernel;
-      double * src;
-      bool _scale;
-      //double * _scaling_factors;
+        std::shared_ptr<neuralfield::function::Layer> heaviside(double value, double radius,
+                std::vector<int> shape,
+                std::string label="");
 
-    private:
-      void init_convolution();
-      
-    public:
-      double * _scaling_factors;
-      
-      Gaussian(std::string label,
-	       double A,
-	       double s,
-	       bool toric,
-	       bool scale,
-	       std::vector<int> shape);
-      
-      ~Gaussian();
+        std::shared_ptr<neuralfield::function::Layer> heaviside(double value, double radius,
+                int size,
+                std::string label="");
 
-      void set_parameters(std::vector<double> params) override;
-      void update() override;  
-    };
+        std::shared_ptr<neuralfield::function::Layer> heaviside(double value, double radius,
+                int size1,
+                int size2,
+                std::string label= "");
 
-    
+        class Gaussian : public neuralfield::function::Layer {
 
-    std::shared_ptr<neuralfield::function::Layer> gaussian(double A,
-							   double s,
-							   bool toric,
-							   bool scale,
-							   std::vector<int> shape,
-							   std::string label="");
-    
-    std::shared_ptr<neuralfield::function::Layer> gaussian(double A,
-							   double s,
-							   bool toric,
-							   bool scale,
-							   int size,
-							   std::string label="");
-    
-    std::shared_ptr<neuralfield::function::Layer> gaussian(double A,
-							   double s,
-							   bool toric,
-							   bool scale,
-							   int size1,
-							   int size2,
-							   std::string label= "");
-      
+            protected:
+                FFTW_Convolution::Workspace ws;
+                bool _toric;
+                double * kernel;
+                double * src;
+                bool _scale;
+                //double * _scaling_factors;
 
-    class SumLayer: public neuralfield::function::Layer {
-      
-    public:
-      SumLayer(std::string label,
-	       std::shared_ptr<neuralfield::layer::Layer> l1,
-	       std::shared_ptr<neuralfield::layer::Layer> l2);
-      
-      void update(void) override;
-    };
-  }
+            private:
+                void init_convolution();
+
+            public:
+                double * _scaling_factors;
+
+                Gaussian(std::string label,
+                        double A,
+                        double s,
+                        bool toric,
+                        bool scale,
+                        std::vector<int> shape);
+
+                ~Gaussian();
+
+                void set_parameters(std::vector<double> params) override;
+                void update() override;  
+        };
+
+
+
+        std::shared_ptr<neuralfield::function::Layer> gaussian(double A,
+                double s,
+                bool toric,
+                bool scale,
+                std::vector<int> shape,
+                std::string label="");
+
+        std::shared_ptr<neuralfield::function::Layer> gaussian(double A,
+                double s,
+                bool toric,
+                bool scale,
+                int size,
+                std::string label="");
+
+        std::shared_ptr<neuralfield::function::Layer> gaussian(double A,
+                double s,
+                bool toric,
+                bool scale,
+                int size1,
+                int size2,
+                std::string label= "");
+
+
+        class SumLayer: public neuralfield::function::Layer {
+
+            public:
+                SumLayer(std::string label,
+                        std::shared_ptr<neuralfield::layer::Layer> l1,
+                        std::shared_ptr<neuralfield::layer::Layer> l2);
+
+                void update(void) override;
+        };
+    }
 }

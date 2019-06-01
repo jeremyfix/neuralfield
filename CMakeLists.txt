@@ -70,6 +70,9 @@ add_subdirectory(examples)
 add_subdirectory(doc)
 
 
+enable_testing()
+add_subdirectory(tests)
+
 ###################################
 #  Custom command for source tgz
 ###################################
