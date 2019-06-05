@@ -1,0 +1,14 @@
+[
+    shape : [20, 20],
+    {
+        type: input,
+        name: "input"
+    }
+    {
+        type: constant,
+        name: "h",
+        params: [
+
+        ]
+    }
+]
