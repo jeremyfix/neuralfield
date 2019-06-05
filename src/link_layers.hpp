@@ -39,6 +39,29 @@
 namespace neuralfield {
     namespace link {
 
+        class Full : public neuralfield::function::Layer {
+            public:
+                Full(std::string label, double value, std::vector<int> shape);
+                void update() override;
+        };
+
+        std::shared_ptr<neuralfield::function::Layer> full(
+                double value,
+                std::vector<int> shape,
+                std::string label
+                );
+
+        std::shared_ptr<neuralfield::function::Layer> full(
+                double value,
+                int size,
+                std::string label
+                );
+
+        std::shared_ptr<neuralfield::function::Layer> full(
+                double value,
+                int size1, int size2, 
+                std::string label
+                );
 
         class Heaviside : public neuralfield::function::Layer {
 

@@ -3,13 +3,62 @@
 #include "tools.hpp"
 
 #include <stdexcept>
+#include <numeric>
+
+neuralfield::link::Full::Full(
+        std::string label,
+        double value, 
+        std::vector<int> shape):
+    neuralfield::function::Layer(label, 1, shape) {
+    neuralfield::function::Layer::set_parameters({value});
+}
+
+void neuralfield::link::Full::update() {
+
+    auto prev = *(_prevs.begin());
+    double contrib = std::accumulate(prev->begin(), prev->end(), 0.0);
+
+    contrib = contrib * (_parameters[0] / (double)this->size());
+    std::fill(this->begin(), this->end(), contrib);
+}
+
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::link::full(
+        double value,
+        std::vector<int> shape,
+        std::string label
+        ) {
+    auto l = std::shared_ptr<neuralfield::link::Full>(new neuralfield::link::Full(label, value, shape));
+    auto net = neuralfield::get_current_network();
+    net += l;
+    return l;
+}
+
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::link::full(
+        double value,
+        int size,
+        std::string label
+        ) {
+return neuralfield::link::full(value, {size}, label);
+}
+
+std::shared_ptr<neuralfield::function::Layer> neuralfield::link::full(
+        double value,
+        int size1,
+        int size2,
+        std::string label
+        ) {
+return neuralfield::link::full(value, {size1, size2}, label);
+}
+
 
 neuralfield::link::Heaviside::Heaviside(std::string label,
         double value, 
         double radius,
         bool toric,
         std::vector<int> shape): 
-    neuralfield::function::Layer(label, 1, shape),
+    neuralfield::function::Layer(label, 2, shape),
     _toric(toric) {
     neuralfield::function::Layer::set_parameters({value, radius});
     _integralImage = new double[this->size()];
@@ -44,27 +93,31 @@ void neuralfield::link::Heaviside::update(void) {
         // by computing the difference of the right values
         // in the integral image
 
-        int idx = 0;
-        int idx_for_left = (int)(radius * this->shape()[0]);
-        auto it_left  = _integralImage;
-        auto it_right = _integralImage + std::min(idx_for_left, this->shape()[0] - 1);
-        auto it_endm1 = _integralImage + this->size() - 1;
-        double contrib = 0.0;
-        
-        for(auto& v: *this) {
-            contrib = *it_right;
-            if(idx > idx_for_left)
-                contrib = contrib - *it_left;
-
-            v = factor * contrib;
-
-            if(idx > idx_for_left)
-                ++it_left;
-            if(it_right != it_endm1)
-                ++it_right;
-            ++idx;
+        if(this->_toric) {
         }
-    
+        else {
+            int idx = 0;
+            int idx_for_left = (int)(radius * this->shape()[0]);
+            auto it_left  = _integralImage;
+            auto it_right = _integralImage + std::min(idx_for_left, this->shape()[0] - 1);
+            auto it_endm1 = _integralImage + this->size() - 1;
+            double contrib = 0.0;
+
+            for(auto& v: *this) {
+                contrib = *it_right;
+                if(idx > idx_for_left)
+                    contrib = contrib - *it_left;
+
+                v = factor * contrib;
+
+                if(idx > idx_for_left)
+                    ++it_left;
+                if(it_right != it_endm1)
+                    ++it_right;
+                ++idx;
+            }
+
+        }
     }
     else if(this->shape().size() == 2) {
         throw std::runtime_error("neuralfield::link::Heaviside::update cannot handle neuralfield of dimensions >= 2");

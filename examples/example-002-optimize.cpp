@@ -225,7 +225,7 @@ int main(int argc, char * argv[]) {
 
   //                                  dttau     h,  Ap,   sm, ka, ks 
   std::array<double, Nparams> lbounds({0.01, -5.0, 0.01,  0.0001, -1., 0.001});
-  std::array<double, Nparams> ubounds({1.00,  5.0, 10000.0,   3.0, -0.0001, 1.});
+  std::array<double, Nparams> ubounds({0.20,  5.0, 1000.0,   3.0, -0.0001, 1.});
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   
