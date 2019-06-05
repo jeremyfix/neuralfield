@@ -44,25 +44,38 @@ namespace neuralfield {
 
             private:
                 double * _integralImage;
+                bool     _toric;
 
             public:
                 Heaviside(std::string label,
                         double value,
                         double radius,
+                        bool toric,
                         std::vector<int> shape);
                 ~Heaviside(void);
                 void update() override;
         };
 
-        std::shared_ptr<neuralfield::function::Layer> heaviside(double value, double radius,
+        std::shared_ptr<neuralfield::function::Layer> heaviside(
+                double value, 
+                double radius, 
+                bool toric,
                 std::vector<int> shape,
-                std::string label="");
+                std::string label=""
+        );
 
-        std::shared_ptr<neuralfield::function::Layer> heaviside(double value, double radius,
+        std::shared_ptr<neuralfield::function::Layer> heaviside(
+                double value, 
+                double radius,
+                bool toric,
                 int size,
-                std::string label="");
+                std::string label=""
+        );
 
-        std::shared_ptr<neuralfield::function::Layer> heaviside(double value, double radius,
+        std::shared_ptr<neuralfield::function::Layer> heaviside(
+                double value, 
+                double radius,
+                bool toric,
                 int size1,
                 int size2,
                 std::string label= "");

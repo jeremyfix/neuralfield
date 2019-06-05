@@ -8,6 +8,7 @@
 template<typename LAYER1, typename LAYER2>
 inline void test_equal_layers(const LAYER1& l1, const LAYER2& l2, const std::string& file, int line, const std::string& pretty_function) {
 	auto it_l2 = l2.cbegin();
+    unsigned int idx = 0;
 	for(const auto& v1: l1) {
 		if(fabs(v1 - *it_l2) > std::numeric_limits<double>::epsilon()) 
 			throw std::runtime_error(file
@@ -17,8 +18,11 @@ inline void test_equal_layers(const LAYER1& l1, const LAYER2& l2, const std::str
 					+ pretty_function 
 					+ std::to_string(v1) 
 					+ std::string("!=") 
-					+ std::to_string(*it_l2));
+                    + std::to_string(*it_l2) 
+                    + std::string(" at index=")
+                    + std::to_string(idx));
 		++it_l2;
+        ++idx;
 	}
 }
 

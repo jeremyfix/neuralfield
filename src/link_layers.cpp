@@ -2,13 +2,22 @@
 #include "network.hpp"
 #include "tools.hpp"
 
+#include <stdexcept>
 
 neuralfield::link::Heaviside::Heaviside(std::string label,
         double value, 
         double radius,
-        std::vector<int> shape): neuralfield::function::Layer(label, 1, shape) {
+        bool toric,
+        std::vector<int> shape): 
+    neuralfield::function::Layer(label, 1, shape),
+    _toric(toric) {
     neuralfield::function::Layer::set_parameters({value, radius});
     _integralImage = new double[this->size()];
+
+    if(radius > 1.0)
+        throw std::runtime_error(std::string("It does not make sense to use a radius > 1 in ")+std::string(__PRETTY_FUNCTION__));
+    if(toric)
+        throw std::runtime_error("Heaviside toric is not yet implemented");
 }
 
 neuralfield::link::Heaviside::~Heaviside(void) {
@@ -16,8 +25,10 @@ neuralfield::link::Heaviside::~Heaviside(void) {
 }
 
 void neuralfield::link::Heaviside::update(void) {
+
     double factor = _parameters[0] / ((double) this->size());
-    
+    double radius = _parameters[1];
+
     if(this->shape().size() == 1) {
         // We compute the integral image
         double* intImgPtr = _integralImage;
@@ -34,14 +45,13 @@ void neuralfield::link::Heaviside::update(void) {
         // in the integral image
 
         int idx = 0;
-        int idx_for_left = (int)(_parameters[1] * this->shape()[0]);
+        int idx_for_left = (int)(radius * this->shape()[0]);
         auto it_left  = _integralImage;
         auto it_right = _integralImage + std::min(idx_for_left, this->shape()[0] - 1);
         auto it_endm1 = _integralImage + this->size() - 1;
         double contrib = 0.0;
         
         for(auto& v: *this) {
-            
             contrib = *it_right;
             if(idx > idx_for_left)
                 contrib = contrib - *it_left;
@@ -65,26 +75,35 @@ void neuralfield::link::Heaviside::update(void) {
 
 
 
-std::shared_ptr<neuralfield::function::Layer> neuralfield::link::heaviside(double value, double radius,
+std::shared_ptr<neuralfield::function::Layer> neuralfield::link::heaviside(
+        double value,
+        double radius,
+        bool toric,
         std::vector<int> shape,
         std::string label) {
-    auto l = std::shared_ptr<neuralfield::link::Heaviside>(new neuralfield::link::Heaviside(label, value, radius, shape));
+    auto l = std::shared_ptr<neuralfield::link::Heaviside>(new neuralfield::link::Heaviside(label, value, radius, toric, shape));
     auto net = neuralfield::get_current_network();
     net += l;
     return l;
 }
 
-std::shared_ptr<neuralfield::function::Layer> neuralfield::link::heaviside(double value, double radius,
-        int size,
+std::shared_ptr<neuralfield::function::Layer> neuralfield::link::heaviside(
+        double      value, 
+        double      radius,
+        bool        toric,
+        int         size,
         std::string label) {
-    return neuralfield::link::heaviside(value, radius, std::vector<int>({size}), label);
+    return neuralfield::link::heaviside(value, radius, toric, std::vector<int>({size}), label);
 }
 
-std::shared_ptr<neuralfield::function::Layer> neuralfield::link::heaviside(double value, double radius,
+std::shared_ptr<neuralfield::function::Layer> neuralfield::link::heaviside(
+        double value, 
+        double radius,
+        bool toric,
         int size1,
         int size2,
         std::string label) {
-    return neuralfield::link::heaviside(value, radius, std::vector<int>({size1, size2}), label);
+    return neuralfield::link::heaviside(value, radius, toric, std::vector<int>({size1, size2}), label);
 }
 
 

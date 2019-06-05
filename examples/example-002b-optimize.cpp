@@ -163,7 +163,7 @@ int main(int argc, char * argv[]) {
   auto h = neuralfield::function::constant(baseline, shape, "h");
   auto u = neuralfield::buffered::leaky_integrator(dt_tau, shape, "u");
   auto g_exc = neuralfield::link::gaussian(Ap, sp, toric, scale, shape,"gexc");
-  auto g_inh =  neuralfield::link::heaviside(Am, RADIUS_SM, shape, "ginh");
+  auto g_inh =  neuralfield::link::heaviside(Am, RADIUS_SM, toric, shape, "ginh");
   auto fu = neuralfield::function::function("sigmoid", shape, "fu");
 
   g_exc->connect(fu);
@@ -181,8 +181,8 @@ int main(int argc, char * argv[]) {
   const unsigned int Nparams = 5;
 
   //                                  dttau     h,  Ap,   sp, Am 
-  std::array<double, Nparams> lbounds({0.01, -1.0, 0.01,  0.0001, -10000.});
-  std::array<double, Nparams> ubounds({1.00,  1.0, 10000.0,  0.2, 0.0});
+  std::array<double, Nparams> lbounds({0.01, -10.0, 0.01,  0.0001, -100000.});
+  std::array<double, Nparams> ubounds({1.00,  10.0, 10000.0,  0.4, 0.0});
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   

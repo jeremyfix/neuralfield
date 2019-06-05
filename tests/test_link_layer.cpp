@@ -6,17 +6,65 @@
 
 
 void test_heaviside(void) {
-    // Test 1D
-    std::vector<int> shape = {10};
-    auto constant_input = neuralfield::function::constant(1.0, shape, "h0"); 
-    auto heaviside = neuralfield::link::heaviside(1.0, 0.5, shape, "h1");
-    heaviside->connect(constant_input);
-    heaviside->update();
+    {
+        // Test 1D   Non toric even
+        const unsigned int N = 10;
+        const double weight = 0.65;
+        const double radius = 0.5;
+        const bool toric = false;
 
-	ASSERT_EQUAL_LAYERS((*constant_input), 
-						(std::array<double,10>({{1,1,1,1,1,1,1,1,1,1}})));
-   	ASSERT_EQUAL_LAYERS((*heaviside), 
-						(std::array<double,10>({{.6,.7,.8,.9,1.,1.,.9,.8,.7,.6}})));
+        std::vector<int> shape = {N};
+        auto constant_input = neuralfield::function::constant(1.0, shape, "h0"); 
+        auto heaviside = neuralfield::link::heaviside(weight, radius, toric, shape, "h1");
+        heaviside->connect(constant_input);
+        heaviside->update();
+
+        ASSERT_EQUAL_LAYERS((*constant_input), 
+                (std::array<double,N>({{1,1,1,1,1,1,1,1,1,1}})));
+        ASSERT_EQUAL_LAYERS((*heaviside), 
+                (std::array<double,N>({{int(N * radius + 1)*weight/double(N),
+                                        int(N * radius + 2)*weight/double(N),
+                                        int(N * radius + 3)*weight/double(N),
+                                        int(N * radius + 4)*weight/double(N),
+                                        int(N * radius + 5)*weight/double(N),
+                                        int(N * radius + 5)*weight/double(N),
+                                        int(N * radius + 4)*weight/double(N),
+                                        int(N * radius + 3)*weight/double(N),
+                                        int(N * radius + 2)*weight/double(N),
+                                        int(N * radius + 1)*weight/double(N)}})));
+
+        neuralfield::clear_current_network();
+    }
+    {
+        // Test 1D   Non toric odd
+        const unsigned int N = 11;
+        const double weight = 1.0;
+        const double radius = 0.5;
+        const bool toric = false;
+
+        std::vector<int> shape = {N};
+        auto constant_input = neuralfield::function::constant(1.0, shape, "h0"); 
+        auto heaviside = neuralfield::link::heaviside(weight, radius, toric, shape, "h1");
+        heaviside->connect(constant_input);
+        heaviside->update();
+
+        ASSERT_EQUAL_LAYERS((*constant_input), 
+                (std::array<double,N>({{1,1,1,1,1,1,1,1,1,1,1}})));
+        ASSERT_EQUAL_LAYERS((*heaviside), 
+                (std::array<double,N>({{int(N * radius + 1)*weight/double(N),
+                                        int(N * radius + 2)*weight/double(N),
+                                        int(N * radius + 3)*weight/double(N),
+                                        int(N * radius + 4)*weight/double(N),
+                                        int(N * radius + 5)*weight/double(N),
+                                        int(N * radius + 6)*weight/double(N),
+                                        int(N * radius + 5)*weight/double(N),
+                                        int(N * radius + 4)*weight/double(N),
+                                        int(N * radius + 3)*weight/double(N),
+                                        int(N * radius + 2)*weight/double(N),
+                                        int(N * radius + 1)*weight/double(N)}})));
+        
+        neuralfield::clear_current_network();
+    }
 }
 
 
