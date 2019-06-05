@@ -29,32 +29,26 @@ void neuralfield::link::Heaviside::update(void) {
             ++intImgPtr;
         }
 
-        intImgPtr = _integralImage;
-        for(unsigned int i = 0 ; i< this->size() ; ++i)
-            std::cout << "int " << i << " : " << *(intImgPtr++) << std::endl;
-        
-        
         // And then compute the weight contribution
         // by computing the difference of the right values
         // in the integral image
 
-        unsigned int idx = 0;
-        unsigned int idx_for_left = (unsigned int)(_parameters[1] * this->shape()[0]+1);
-        std::cout << idx_for_left << std::endl;
+        int idx = 0;
+        int idx_for_left = (int)(_parameters[1] * this->shape()[0]);
         auto it_left  = _integralImage;
-        auto it_right = _integralImage + std::min(idx_for_left, this->size() - 1);
+        auto it_right = _integralImage + std::min(idx_for_left, this->shape()[0] - 1);
         auto it_endm1 = _integralImage + this->size() - 1;
         double contrib = 0.0;
+        
         for(auto& v: *this) {
             
             contrib = *it_right;
-            std::cout << "contrib : " << contrib << std::endl;
-            if(idx >= idx_for_left)
+            if(idx > idx_for_left)
                 contrib = contrib - *it_left;
 
             v = factor * contrib;
 
-            if(idx >= idx_for_left)
+            if(idx > idx_for_left)
                 ++it_left;
             if(it_right != it_endm1)
                 ++it_right;
