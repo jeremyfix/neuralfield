@@ -80,14 +80,15 @@ void neuralfield::link::Heaviside::update(void) {
 
     if(this->shape().size() == 1) {
         // We compute the integral image
-        double* intImgPtr = _integralImage;
+        /* double* intImgPtr = _integralImage; */
         auto prev = *(_prevs.begin());
-        double acu = 0;
-        for(const auto& v_prev: *prev) {
-            acu += v_prev;
-            *intImgPtr = acu;
-            ++intImgPtr;
-        }
+        /* double acu = 0; */
+        /* for(const auto& v_prev: *prev) { */
+        /*     acu += v_prev; */
+        /*     *intImgPtr = acu; */
+        /*     ++intImgPtr; */
+        /* } */
+        std::partial_sum(prev->begin(), prev->end(), _integralImage);
 
         // And then compute the weight contribution
         // by computing the difference of the right values
