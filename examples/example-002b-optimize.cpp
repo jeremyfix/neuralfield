@@ -177,6 +177,7 @@ int main(int argc, char * argv[]) {
   // Parametrization of popot
   
   const unsigned int Nparams = 5;
+  const unsigned int nb_evaluations = 5;
 
   //                                  dttau     h,  Ap,   sp, Am 
   std::array<double, Nparams> lbounds({0.01, -5.0, 0.01,  0.0001, -1000.});
@@ -184,7 +185,7 @@ int main(int argc, char * argv[]) {
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   
-  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 1000 || fitness <= 1e-5;};
+  auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 1000 || fitness <= 1e-7;};
   
   auto cost_function = [Nsteps, shape, net, sigma, dsigma] (TVector& pos) -> double { 
     return evaluate(Nsteps, sigma, dsigma, shape, net, pos.getValuesPtr());
@@ -195,7 +196,7 @@ int main(int argc, char * argv[]) {
                                    ubound, 
                                    stop, 
                                    cost_function, 
-                                   1);
+                                   nb_evaluations);
     
   // We run the algorithm
   algo->run(1);

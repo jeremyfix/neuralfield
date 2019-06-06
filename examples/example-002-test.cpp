@@ -5,7 +5,29 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 
-// Example of params :
+////////////
+// Example of params with global inhibition
+//
+// 1D
+// Non Toric
+// ./examples/example-002-test 0.4 3.11235 434.956 0.0304211 -151.777 0 0 50
+// ./examples/example-002-test 0.4 3.11235 434.956 0.0304211 -151.777 0 0 1000
+
+// Toric
+//
+//
+
+////
+// 2D
+// Non Toric
+//
+
+// Toric
+//
+
+
+////////////
+// Example of params that were optimized when the test code used a gaussian inhibition layer ginh:
 // 1D
 
 // Non Toric 
@@ -47,8 +69,8 @@ void fillInput(neuralfield::values_iterator begin,
 
 int main(int argc, char* argv[]) {
 
-    if(argc != 10 && argc != 11) {
-        std::cerr << "Usage : " << argv[0] << " dt_tau h Ap sp Am sm toric scale N <M>" << std::endl;
+    if(argc != 9 && argc != 10) {
+        std::cerr << "Usage : " << argv[0] << " dt_tau h Ap sp Am toric scale N <M>" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -57,23 +79,23 @@ int main(int argc, char* argv[]) {
     double Ap = std::atof(argv[3]);
     double sp = std::atof(argv[4]);
     double Am = std::atof(argv[5]);
-    double sm = std::atof(argv[6]);
+    //double sm = std::atof(argv[6]);
 
-    bool toric = std::atoi(argv[7]);
-    bool scale = std::atoi(argv[8]);
+    bool toric = std::atoi(argv[6]);
+    bool scale = std::atoi(argv[7]);
 
     std::vector<int> shape;
 
-    shape.push_back(std::atoi(argv[9]));
-    if(argc == 11)
-        shape.push_back(std::atoi(argv[10]));
+    shape.push_back(std::atoi(argv[8]));
+    if(argc == 10)
+        shape.push_back(std::atoi(argv[9]));
 
     auto input = neuralfield::input::input<Input>(shape, fillInput, "input");
 
     auto h = neuralfield::function::constant(baseline, shape, "h");
     auto u = neuralfield::buffered::leaky_integrator(dt_tau, shape, "u");
     auto g_exc = neuralfield::link::gaussian(Ap, sp, toric, scale, shape,"gexc");
-    auto g_inh =  neuralfield::link::gaussian(Am, sm, toric, scale, shape, "ginh");
+    auto g_inh =  neuralfield::link::full(Am, shape, "ginh");
     auto fu = neuralfield::function::function("sigmoid", shape, "fu");
     auto noise = neuralfield::function::uniform_noise(-0.1, 0.1, shape);
 
