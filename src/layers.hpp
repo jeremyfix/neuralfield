@@ -74,7 +74,8 @@ namespace neuralfield {
       unsigned int size() const;
       std::vector<int> shape() const;
       std::string label();
-      
+     
+      double get_parameter(unsigned int idx) const;
       virtual void set_parameters(std::vector<double> params);
       
       values_iterator begin();

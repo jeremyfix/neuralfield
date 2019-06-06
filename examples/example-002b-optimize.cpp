@@ -29,10 +29,10 @@ double evaluate(unsigned int nb_steps,
   double h = params[1];
   double Ap = params[2];
   double sp = params[3];
-  double Am = params[4];
+  double ka = params[4];
   
   net->get("gexc")->set_parameters({Ap, sp});
-  net->get("ginh")->set_parameters({Am});
+  net->get("ginh")->set_parameters({ka * Ap});
   net->get("h")->set_parameters({h});
   net->get("u")->set_parameters({dt_tau});
 
@@ -63,10 +63,10 @@ void test(unsigned int nb_steps,
   double baseline = params[1];
   double Ap = params[2];
   double sp = params[3];
-  double Am = params[4];
+  double ka = params[4];
   
   net->get("gexc")->set_parameters({Ap, sp});
-  net->get("ginh")->set_parameters({Am});
+  net->get("ginh")->set_parameters({ka * Ap});
   net->get("h")->set_parameters({baseline});
   net->get("u")->set_parameters({dt_tau});
   
@@ -138,13 +138,13 @@ int main(int argc, char * argv[]) {
   RNG_GENERATOR::rng_srand();
   RNG_GENERATOR::rng_warm_up();
   
-  double dt_tau = 0.01;
-  double baseline = 0.0;
-  double Ap = 1.5;
-  double sp = 2.;
-  double Am = -1.3;
-  bool toric = std::atoi(argv[3]);
-  bool scale = std::atoi(argv[4]);
+  double dt_tau      = 0.01;
+  double baseline    = 0.0;
+  double Ap          = 1.5;
+  double sp          = 2.;
+  double Am          = -1.3;
+  bool toric         = std::atoi(argv[3]);
+  bool scale         = std::atoi(argv[4]);
   unsigned int Nsteps = 100;
 
   double sigma = std::atof(argv[1]);
@@ -158,11 +158,11 @@ int main(int argc, char * argv[]) {
   
   auto input = neuralfield::input::input<Input>(shape, fillInput, "input");
 
-  auto h = neuralfield::function::constant(baseline, shape, "h");
-  auto u = neuralfield::buffered::leaky_integrator(dt_tau, shape, "u");
+  auto h     = neuralfield::function::constant(baseline, shape, "h");
+  auto u     = neuralfield::buffered::leaky_integrator(dt_tau, shape, "u");
   auto g_exc = neuralfield::link::gaussian(Ap, sp, toric, scale, shape,"gexc");
-  auto g_inh =  neuralfield::link::full(Am, shape, "ginh");
-  auto fu = neuralfield::function::function("sigmoid", shape, "fu");
+  auto g_inh = neuralfield::link::full(Am, shape, "ginh");
+  auto fu    = neuralfield::function::function("sigmoid", shape, "fu");
 
   g_exc->connect(fu);
   g_inh->connect(fu);
@@ -179,9 +179,9 @@ int main(int argc, char * argv[]) {
   const unsigned int Nparams = 5;
   const unsigned int nb_evaluations = 5;
 
-  //                                  dttau     h,  Ap,   sp, Am 
-  std::array<double, Nparams> lbounds({0.01, -5.0, 0.01,  0.0001, -1000.});
-  std::array<double, Nparams> ubounds({0.20,  5.0, 1000.0,  .5, 0.0});
+  //                                  dttau     h,  Ap,   sp, ka 
+  std::array<double, Nparams> lbounds({0.01, -5.0, 0.01,  0.0001, -1.0});
+  std::array<double, Nparams> ubounds({0.20,  5.0, 10000.0,  .5,  0.0});
   auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
   auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
   
@@ -211,7 +211,7 @@ int main(int argc, char * argv[]) {
   std::cout << "  h      : " << best_params[1] << std::endl;
   std::cout << "  Ap     : " << best_params[2] << std::endl;
   std::cout << "  sp     : " << best_params[3] << std::endl;
-  std::cout << "  Am     : " << best_params[4] << std::endl;
+  std::cout << "  Am     : " << best_params[4]*best_params[2] << std::endl;
 
   std::cout << std::endl;
   std::cout << " To test it : " << std::endl;
@@ -220,7 +220,7 @@ int main(int argc, char * argv[]) {
         <<  best_params[1] << " "
         <<  best_params[2] << " "
         <<  best_params[3] << " "
-        <<  best_params[4] << " "
+        <<  best_params[4]*best_params[2] << " "
         <<  int(toric) << " "
         <<  int(scale) << " ";
   for(auto& s: shape)

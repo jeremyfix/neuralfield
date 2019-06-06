@@ -31,7 +31,12 @@ std::vector<int> neuralfield::layer::Layer::shape() const {
 std::string neuralfield::layer::Layer::label() {
   return _label;
 }
-      
+
+double neuralfield::layer::Layer::get_parameter(unsigned int idx) const {
+    assert(idx < _parameters.size());
+    return *(_parameters.begin() + idx);
+}
+
 void neuralfield::layer::Layer::set_parameters(std::vector<double> params) {
   assert(params.size() == _parameters.size());
   std::copy(params.begin(), params.end(), _parameters.begin());

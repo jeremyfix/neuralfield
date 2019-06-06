@@ -18,7 +18,7 @@ void neuralfield::link::Full::update() {
     auto prev = *(_prevs.begin());
     double contrib = std::accumulate(prev->begin(), prev->end(), 0.0);
 
-    contrib = contrib * (_parameters[0] / (double)this->size());
+    contrib = contrib * (this->get_parameter(0) / (double)this->size());
     std::fill(this->begin(), this->end(), contrib);
 }
 
@@ -40,7 +40,7 @@ std::shared_ptr<neuralfield::function::Layer> neuralfield::link::full(
         int size,
         std::string label
         ) {
-return neuralfield::link::full(value, {size}, label);
+    return neuralfield::link::full(value, {size}, label);
 }
 
 std::shared_ptr<neuralfield::function::Layer> neuralfield::link::full(
@@ -49,7 +49,7 @@ std::shared_ptr<neuralfield::function::Layer> neuralfield::link::full(
         int size2,
         std::string label
         ) {
-return neuralfield::link::full(value, {size1, size2}, label);
+    return neuralfield::link::full(value, {size1, size2}, label);
 }
 
 
@@ -75,8 +75,8 @@ neuralfield::link::Heaviside::~Heaviside(void) {
 
 void neuralfield::link::Heaviside::update(void) {
 
-    double factor = _parameters[0] / ((double) this->size());
-    double radius = _parameters[1];
+    double factor = this->get_parameter(0) / ((double) this->size());
+    double radius = this->get_parameter(1);
 
     if(this->shape().size() == 1) {
         // We compute the integral image
@@ -186,8 +186,8 @@ void neuralfield::link::Gaussian::init_convolution() {
 
         kernel = new double[k_shape];
         double * kptr = kernel;
-        double A = _parameters[0];
-        double s = _parameters[1];
+        double A = this->get_parameter(0);
+        double s = this->get_parameter(1);
         for(int i = 0 ; i < k_shape ; ++i, ++kptr) {
             float d = dist(i, k_center);
             *kptr = A * exp(-d*d / (2.0 * s*s))  * 1.0 / (k_shape);
@@ -236,8 +236,8 @@ void neuralfield::link::Gaussian::init_convolution() {
         auto dist = neuralfield::distances::make_euclidean_2D(k_shape, _toric);
 
         kernel = new double[k_shape[0]*k_shape[1]];
-        double A = _parameters[0];
-        double s = _parameters[1];
+        double A = this->get_parameter(0);
+        double s = this->get_parameter(1);
         double * kptr = kernel;
         for(int i = 0 ; i < k_shape[0] ; ++i) {
             for(int j = 0 ; j < k_shape[1]; ++j, ++kptr) {
@@ -285,10 +285,8 @@ neuralfield::link::Gaussian::Gaussian(std::string label,
 {
     src = new double[_size];
     _scaling_factors = new double[_size];
-    _parameters[0] = A;
-    _parameters[1] = s;
+    this->set_parameters({A, s});
     init_convolution();
-
 }
 
 neuralfield::link::Gaussian::~Gaussian() {
