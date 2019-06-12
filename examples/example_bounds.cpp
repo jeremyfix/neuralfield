@@ -12,13 +12,13 @@ int main(int argc, char* argv[]) {
 
     std::vector<int> shape;
     shape.push_back(std::atoi(argv[3]));
-    if(argc == 3)
+    if(argc == 5)
         shape.push_back(std::atoi(argv[4]));
-
+    std::cout << shape.size() << std::endl;
 
     double sigma = std::atof(argv[1]);
     double dsigma = std::atof(argv[2]);
-    RandomCompetition scenar(100, shape, sigma, dsigma, true);
+    RandomCompetition scenar(0 /*dont care*/, shape, sigma, dsigma, true);
 
     std::vector<double> max_pos;
     for(const auto s: shape)
