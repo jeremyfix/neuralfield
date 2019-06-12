@@ -65,6 +65,30 @@ void test_heaviside(void) {
         
         neuralfield::clear_current_network();
     }
+    {
+        // Test 1D   Toric even
+        const unsigned int N = 10;
+        const double weight = 0.65;
+        const double radius = 0.4;
+        const bool toric = true;
+
+        std::vector<int> shape = {N};
+        auto constant_input = neuralfield::function::constant(1.0, shape, "h0"); 
+        auto heaviside = neuralfield::link::heaviside(weight, radius, toric, shape, "h1");
+        heaviside->connect(constant_input);
+        heaviside->update();
+
+        ASSERT_EQUAL_LAYERS((*constant_input), 
+                (std::array<double,N>({{1,1,1,1,1,1,1,1,1,1}})));
+        double value = int(2 * N * radius + 1)*weight/double(N);
+        ASSERT_EQUAL_LAYERS((*heaviside), 
+                (std::array<double,N>({{value, value, value,
+                                        value, value, value,
+                                        value, value, value,
+                                        value}})));
+
+        neuralfield::clear_current_network();
+    }
 }
 
 

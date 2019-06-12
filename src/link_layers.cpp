@@ -88,6 +88,7 @@ void neuralfield::link::Heaviside::update(void) {
         // in the integral image
 
         if(this->_toric) {
+            throw std::runtime_error("neuralfield::link::Heaviside::update cannot handle toric neuralfield of dimension 1");
         }
         else {
             int idx = 0;
