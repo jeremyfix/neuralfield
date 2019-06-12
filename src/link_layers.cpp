@@ -78,6 +78,8 @@ void neuralfield::link::Heaviside::update(void) {
     double factor = this->get_parameter(0) / ((double) this->size());
     double radius = this->get_parameter(1);
 
+    std::fill(_integralImage, _integralImage + this->size(), 0.0);
+
     if(this->shape().size() == 1) {
         // We compute the integral image
         auto prev = *(_prevs.begin());
@@ -115,7 +117,33 @@ void neuralfield::link::Heaviside::update(void) {
         }
     }
     else if(this->shape().size() == 2) {
-        throw std::runtime_error("neuralfield::link::Heaviside::update cannot handle neuralfield of dimensions >= 2");
+        // We compute the integral image
+        auto prev = *(_prevs.begin());
+        auto prev_begin = prev->begin();
+        double * intImagePtr = _integralImage;
+
+        // cumulative sum along the horizontal axis
+        for(int i = 0 ; i < this->shape()[1]; ++i) {
+            std::partial_sum(prev_begin, prev_begin + this->shape()[0], intImagePtr);
+            prev_begin += this->shape()[0];
+            intImagePtr += this->shape()[0];
+        } 
+        // cumulative sum along the vertical axis
+        for(int i = 1; i < this->shape()[0]; ++i) {
+            for(int j = 0 ; j < this->shape()[1]; ++j) {
+                _integralImage[i * this->shape()[1] + j] += _integralImage[(i-1) * this->shape()[1] + j];
+            }
+        }
+        // And then compute the weight contribution
+        // by computing the difference of the right values
+        // in the integral image
+
+        if(this->_toric) {
+            throw std::runtime_error("neuralfield::link::Heaviside::update cannot handle toric neuralfield of dimension 2");
+        }
+        else {
+            
+        }
     }
     else 
         throw std::runtime_error("neuralfield::link::Heaviside::update cannot handle neuralfield of dimensions > 2");

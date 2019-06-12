@@ -65,7 +65,7 @@ namespace neuralfield {
 
         class Heaviside : public neuralfield::function::Layer {
 
-            private:
+            public:
                 double * _integralImage;
                 bool     _toric;
 
