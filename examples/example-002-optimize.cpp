@@ -80,50 +80,9 @@ void test(unsigned int nb_steps,
         std::vector<int> shape,
         TNETWORK_BUILD& builder,
         double * params) {
-
-
     std::cout << "Testing" << std::endl;
 
     auto net = builder(params);
-
-    int size = 1;
-    for(auto s: shape)
-        size *= s;
-
-    if(shape.size() == 1) {
-        std::cout << "Scaling factors gexc" << std::endl;
-        for(int i = 0; i < size; ++i)
-            std::cout << std::static_pointer_cast<neuralfield::link::Gaussian>(net->get("gexc"))->_scaling_factors[i] << " ";
-        std::cout << std::endl;
-
-        std::cout << "Scaling factors ginh" << std::endl;
-        for(int i = 0; i < size; ++i)
-            std::cout << std::static_pointer_cast<neuralfield::link::Gaussian>(net->get("ginh"))->_scaling_factors[i] << " ";
-        std::cout << std::endl;
-    }
-    else if(shape.size() == 2) {
-        std::cout << "Scaling factors gexc" << std::endl;
-
-        for(int i = 0; i < shape[1]; ++i) {
-            for(int j = 0 ; j < shape[0]; ++j) {
-                std::cout << std::static_pointer_cast<neuralfield::link::Gaussian>(net->get("gexc"))->_scaling_factors[i*shape[0] + j] << " ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-
-        std::cout << "Scaling factors ginh" << std::endl;
-
-        for(int i = 0; i < shape[1]; ++i) {
-            for(int j = 0 ; j < shape[0]; ++j) {
-                std::cout << std::static_pointer_cast<neuralfield::link::Gaussian>(net->get("ginh"))->_scaling_factors[i*shape[0] + j] << " ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-
-    }
-
 
     bool toric_fitness = true;
     auto s1 = RandomCompetition(nb_steps, shape, sigma, dsigma, toric_fitness);
@@ -180,9 +139,9 @@ void test(unsigned int nb_steps,
 
 int main(int argc, char * argv[]) {
 
-    if(argc != 6 and argc != 7) {
+    if(argc != 5 and argc != 6) {
         std::cerr << "Script to optimize a 2D neural field for a competition scenario" << std::endl;
-        std::cerr << "Usage : " << argv[0] << " sigma dsigma toric scale N <M>" << std::endl;
+        std::cerr << "Usage : " << argv[0] << " sigma dsigma toric N <M>" << std::endl;
         std::exit(-1);
     }
 
@@ -196,7 +155,6 @@ int main(int argc, char * argv[]) {
     double Am = -1.3;
     double sm = 10.;
     bool toric = std::atoi(argv[3]);
-    bool scale = std::atoi(argv[4]);
     unsigned int Nsteps = 100;
 
     double sigma = std::atof(argv[1]);
@@ -204,17 +162,16 @@ int main(int argc, char * argv[]) {
 
     std::vector<int> shape;
 
-    shape.push_back(std::atoi(argv[5]));
-    if(argc == 7)
-        shape.push_back(std::atoi(argv[6]));
+    shape.push_back(std::atoi(argv[4]));
+    if(argc == 6)
+        shape.push_back(std::atoi(argv[5]));
 
     auto input = neuralfield::input::input<Input>(shape, fillInput, "input");
-
-    auto h = neuralfield::function::constant(baseline, shape, "h");
-    auto u = neuralfield::buffered::leaky_integrator(dt_tau, shape, "u");
-    auto g_exc = neuralfield::link::gaussian(Ap, sp, toric, scale, shape,"gexc");
-    auto g_inh =  neuralfield::link::gaussian(Am, sm, toric, scale, shape, "ginh");
-    auto fu = neuralfield::function::function("sigmoid", shape, "fu");
+    auto h     = neuralfield::function::constant(baseline, shape, "h");
+    auto u     = neuralfield::buffered::leaky_integrator(dt_tau, shape, "u");
+    auto g_exc = neuralfield::link::gaussian(Ap, sp, toric, false, shape,"gexc");
+    auto g_inh = neuralfield::link::gaussian(Am, sm, toric, false, shape, "ginh");
+    auto fu    = neuralfield::function::function("sigmoid", shape, "fu");
 
     g_exc->connect(fu);
     g_inh->connect(fu);
@@ -229,6 +186,7 @@ int main(int argc, char * argv[]) {
     // Parametrization of popot
 
     const unsigned int Nparams = 6;
+    const unsigned int nb_evaluations = 1;
 
     //                                  dttau     h,  Ap,   sm, ka, ks 
     std::array<double, Nparams> tlbounds({0.01, -5.0, 0.01,  0.0001, -1., 0.001});
@@ -237,15 +195,12 @@ int main(int argc, char * argv[]) {
         return build_network(net, tlbounds, tubounds, params);
     };
     
-    
-    std::array<double, Nparams> lbounds({0.0,  0.0,  0.0,  0.0, 0.0, 0.0});
-    std::array<double, Nparams> ubounds({1.0,  1.0,  1.0,   1.0,1.0, 1.0});
-    auto lbound = [lbounds] (size_t index) -> double { return lbounds[index];};
-    auto ubound = [ubounds] (size_t index) -> double { return ubounds[index];};
+    auto lbound = [] (size_t index) -> double { return 0.0;};
+    auto ubound = [] (size_t index) -> double { return 1.0;};
 
-    auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 1000 || fitness <= 1e-5;};
+    auto stop =   [] (double fitness, int epoch) -> bool { return epoch >= 1000 || fitness <= 1e-10;};
 
-    auto cost_function = [Nsteps, shape, net, sigma, dsigma, &network_builder] (TVector& pos) -> double { 
+    auto cost_function = [Nsteps, shape, sigma, dsigma, &network_builder] (TVector& pos) -> double { 
         return evaluate(Nsteps, sigma, dsigma, shape,  network_builder, pos.getValuesPtr());
     };
 
@@ -254,7 +209,7 @@ int main(int argc, char * argv[]) {
             ubound, 
             stop, 
             cost_function, 
-            1); // The scenario is run 1 time
+            nb_evaluations);
 
     // We run the algorithm with verbosity
     algo->run(1);
@@ -264,12 +219,12 @@ int main(int argc, char * argv[]) {
     auto best_params = algo->getBest().getPosition().getValuesPtr();
     test(Nsteps, sigma, dsigma, shape, network_builder, best_params);
 
-    dt_tau   = get_param(lbounds, ubounds, best_params, 0);
-    baseline = get_param(lbounds, ubounds, best_params, 1);
-    Ap       = get_param(lbounds, ubounds, best_params, 2);
-    sm       = get_param(lbounds, ubounds, best_params, 3);
-    double ka     = get_param(lbounds, ubounds, best_params, 4);
-    double ks     = get_param(lbounds, ubounds, best_params, 5);
+    dt_tau   = get_param(tlbounds, tubounds, best_params, 0);
+    baseline = get_param(tlbounds, tubounds, best_params, 1);
+    Ap       = get_param(tlbounds, tubounds, best_params, 2);
+    sm       = get_param(tlbounds, tubounds, best_params, 3);
+    double ka     = get_param(tlbounds, tubounds, best_params, 4);
+    double ks     = get_param(tlbounds, tubounds, best_params, 5);
     Am       = Ap * ka;
     sp       = sm * ks;
 
@@ -290,8 +245,7 @@ int main(int argc, char * argv[]) {
         <<  sp       << " "
         <<  Am       << " "
         <<  sm       << " "
-        <<  int(toric) << " "
-        <<  int(scale) << " ";
+        <<  int(toric) << " ";
     for(auto& s: shape)
         std::cout << s << " ";
     std::cout << std::endl;

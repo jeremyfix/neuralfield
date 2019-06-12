@@ -10,12 +10,17 @@
 //
 // 1D
 // Non Toric
-// ./examples/example-002-test 0.4 3.11235 434.956 0.0304211 -151.777 0 0 50
-// ./examples/example-002-test 0.4 3.11235 434.956 0.0304211 -151.777 0 0 100000
+// ./examples/example-002b-optimize 0.05 0.01 0 50
+//    ./examples/example-002-test 0.149815 3.58467 396.044 0.0283683 -138.285 0 15
+//    ./examples/example-002-test 0.149815 3.58467 396.044 0.0283683 -138.285 0 30
+//    ./examples/example-002-test 0.149815 3.58467 396.044 0.0283683 -138.285 0 50000
 
 // Toric
-//  ./examples/example-002-test 0.5 4.8523 314.782 0.0767772 -259.586 1 0 30
-//  ./examples/example-002-test 0.5 4.8523 314.782 0.0767772 -259.586 1 0 100000
+// ./examples/example-002b-optimize 0.05 0.01 1 50
+//
+//   ./examples/example-002-test 0.198486 2.10177 311.587 0.0855248 -248.695 1 15
+//   ./examples/example-002-test 0.198486 2.10177 311.587 0.0855248 -248.695 1 30
+//   ./examples/example-002-test 0.198486 2.10177 311.587 0.0855248 -248.695 1 50000
 //
 
 
@@ -23,49 +28,16 @@
 // 2D
 // Non Toric
 //
+// ./examples/example-002b-optimize 0.05 0.01 0 10 10
+//    ./examples/example-002-test 0.175826 4.478 71207.3 0.0604805 -17505.6 0 10 10
+//    ./examples/example-002-test 0.175826 4.478 71207.3 0.0604805 -17505.6 0 100 100
 
 // Toric
 //
-// ./examples/example-002-optimize 0.05 0.01 1 0 30 30
-//  ./examples/example-002-test 0.180918 3.49606 6999.74 0.182084 -6836.98 1 0 15 15
-//  ./examples/example-002-test 0.180918 3.49606 6999.74 0.182084 -6836.98 1 0 500 500
-
-
-
-////////////
-// Example of params that were optimized when the test code used a gaussian inhibition layer ginh:
-// 1D
-
-// Non Toric 
-// ./examples/example-002-optimize 0.05 0.01 0 0 100
-// ./examples/example-002-test 0.251907 4.3888 200 0.0327614 -199.686 1.30873 0 0 50
-// ./examples/example-002-test 0.251907 4.3888 200 0.0327614 -199.686 1.30873 0 0 1000
-
-// Toric : 
-// ./examples/example-002-optimize 0.05 0.01 0 1 100
-// ./examples/example-002-test 0.462517 4.44093 5904.77 0.458582 -5895.56 0.7237 1 0 30
-// ./examples/example-002-test 0.462517 4.44093 5904.77 0.458582 -5895.56 0.7237 1 0 50
-// ./examples/example-002-test 0.462517 4.44093 5904.77 0.458582 -5895.56 0.7237 1 0 100
-// ./examples/example-002-test 0.462517 4.44093 5904.77 0.458582 -5895.56 0.7237 1 0 5000
-
-
-////
-// 2D
-
-//  Toric 
-
-// ./examples/example-002-optimize 0.05 0.01 1 0 30 30
-//  ./examples/example-002-test 0.180918 3.49606 6999.74 0.182084 -6836.98 0.942208 1 0 15 15
-//  ./examples/example-002-test 0.180918 3.49606 6999.74 0.182084 -6836.98 0.942208 1 0 30 30
-//  ./examples/example-002-test 0.180918 3.49606 6999.74 0.182084 -6836.98 0.942208 1 0 200 200
-//  ./examples/example-002-test 0.180918 3.49606 6999.74 0.182084 -6836.98 0.942208 1 0 500 500
-
-//  NonToric 30x30
-//   ./examples/example-002-optimize 0.05 0.01 0 0 30 30
-//   ./examples/example-002-test 0.292056 0.913986 7069.06 0.0931234 -6764.38 1.95489 0 0 30 30
-//   ./examples/example-002-test 0.292056 0.913986 7069.06 0.0931234 -6764.38 1.95489 0 0 50 50
-//   ./examples/example-002-test 0.292056 0.913986 7069.06 0.0931234 -6764.38 1.95489 0 0 200 200
-
+// ./examples/example-002b-optimize 0.05 0.01 1 10 10
+//
+//    ./examples/example-002-test 0.190387 0.125372 24399 0.141612 -20897.5 1 10 10
+//    ./examples/example-002-test 0.190387 0.125372 24399 0.141612 -20897.5 1 100 100
 
 void fillInput(neuralfield::values_iterator begin,
         neuralfield::values_iterator end,
@@ -75,35 +47,30 @@ void fillInput(neuralfield::values_iterator begin,
 
 int main(int argc, char* argv[]) {
 
-    if(argc != 9 && argc != 10) {
-        std::cerr << "Usage : " << argv[0] << " dt_tau h Ap sp Am toric scale N <M>" << std::endl;
+    if(argc != 8 && argc != 9) {
+        std::cerr << "Usage : " << argv[0] << " dt_tau h Ap sp Am toric N <M>" << std::endl;
         return EXIT_FAILURE;
     }
 
-    double dt_tau = std::atof(argv[1]);
+    double dt_tau   = std::atof(argv[1]);
     double baseline = std::atof(argv[2]);
-    double Ap = std::atof(argv[3]);
-    double sp = std::atof(argv[4]);
-    double Am = std::atof(argv[5]);
-    //double sm = std::atof(argv[6]);
-
-    bool toric = std::atoi(argv[6]);
-    bool scale = std::atoi(argv[7]);
+    double Ap       = std::atof(argv[3]);
+    double sp       = std::atof(argv[4]);
+    double Am       = std::atof(argv[5]);
+    bool toric      = std::atoi(argv[6]);
 
     std::vector<int> shape;
-
-    shape.push_back(std::atoi(argv[8]));
-    if(argc == 10)
-        shape.push_back(std::atoi(argv[9]));
+    shape.push_back(std::atoi(argv[7]));
+    if(argc == 9)
+        shape.push_back(std::atoi(argv[8]));
 
     auto input = neuralfield::input::input<Input>(shape, fillInput, "input");
-
-    auto h = neuralfield::function::constant(baseline, shape, "h");
-    auto u = neuralfield::buffered::leaky_integrator(dt_tau, shape, "u");
-    auto g_exc = neuralfield::link::gaussian(Ap, sp, toric, scale, shape,"gexc");
-    auto g_inh =  neuralfield::link::full(Am, shape, "ginh");
-    auto fu = neuralfield::function::function("sigmoid", shape, "fu");
-    auto noise = neuralfield::function::uniform_noise(-0.1, 0.1, shape);
+    auto h     = neuralfield::function::constant(baseline, shape, "h");
+    auto u     = neuralfield::buffered::leaky_integrator(dt_tau, shape, "u");
+    auto g_exc = neuralfield::link::gaussian(Ap, sp, toric, false, shape,"gexc");
+    auto g_inh = neuralfield::link::full(Am, shape, "ginh");
+    auto fu    = neuralfield::function::function("sigmoid", shape, "fu");
+    auto noise = neuralfield::function::uniform_noise(-0.1, 0.1, shape, "noise");
 
     g_exc->connect(fu);
     g_inh->connect(fu);
@@ -116,7 +83,7 @@ int main(int argc, char* argv[]) {
     net->init();
 
     cv::namedWindow("Input", cv::WINDOW_AUTOSIZE);
-    cv::namedWindow("f(u)", cv::WINDOW_AUTOSIZE);
+    cv::namedWindow("f(u)" , cv::WINDOW_AUTOSIZE);
 
     std::cout << "Usage : " << std::endl;
     std::cout << "   <space> : pause/run " << std::endl;
