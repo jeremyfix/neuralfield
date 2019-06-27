@@ -142,7 +142,23 @@ void neuralfield::link::Heaviside::update(void) {
             throw std::runtime_error("neuralfield::link::Heaviside::update cannot handle toric neuralfield of dimension 2");
         }
         else {
-            
+            int idx_i = 0;
+            int idx_j = 0;
+            int idx_for_left = (int)(radius * this->shape()[1]);
+            int idx_for_top  = (int)(radius * this->shape()[0]);
+            auto it_left   = _integralImage;
+            auto it_right  = _integralImage + std::min(idx_for_left, this->shape()[1] - 1);
+            auto it_top    = _integralImage;
+            auto it_bottom = _integralImage + std::min(idx_for_top, this->shape()[0] - 1);
+            double contrib = 0.0;
+
+            for(auto& v: *this) {
+                contrib = *it_bottom_right;
+                if(idx_j > idx_for_left && idx_i > idx_for_top)
+                    contrib = contrib - *it_bottom_left - *it_top_right + *it_top_left;
+                else if(idx_j > idx_for_left)
+                    contrib.... 
+            }           
         }
     }
     else 
