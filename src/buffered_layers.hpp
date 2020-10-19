@@ -60,7 +60,7 @@ namespace neuralfield {
       LeakyIntegrator(std::string label,
 		      double alpha,
 		      std::vector<int> shape);
-
+	  virtual ~LeakyIntegrator();
       void update(void) override;
     };
 

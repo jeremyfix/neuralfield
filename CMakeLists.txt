@@ -7,6 +7,8 @@ SET(PACKAGE_VERSION "1.00")
 SET(PACKAGE_LICENSE "GPL")
 
 SET(CMAKE_BUILD_TYPE Release)
+# Export the compilation database JSON file
+SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 SET(PROJECT_DESCRIPTION_SUMMARY "C++ Library for parametrized NeuralFields")
 
